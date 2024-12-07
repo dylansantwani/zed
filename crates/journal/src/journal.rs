@@ -61,7 +61,7 @@ pub fn init(_: Arc<AppState>, cx: &mut AppContext) {
     cx.observe_new_models(
         |workspace: &mut Workspace, _cx: &mut ModelContext<Workspace>| {
             workspace.register_action(|workspace, _: &NewJournalEntry, cx| {
-                new_journal_entry(workspace, cx);
+                new_journal_entry(workspace, window, cx);
             });
         },
     )

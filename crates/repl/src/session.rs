@@ -253,12 +253,14 @@ impl Session {
                 working_directory,
                 self.fs.clone(),
                 session_view,
+                window,
                 cx,
             ),
             KernelSpecification::Remote(remote_kernel_specification) => RemoteRunningKernel::new(
                 remote_kernel_specification,
                 working_directory,
                 session_view,
+                window,
                 cx,
             ),
         };

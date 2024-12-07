@@ -57,7 +57,7 @@ impl ToolchainSelector {
                 .flatten();
             workspace
                 .update(&mut cx, |this, cx| {
-                    this.toggle_modal(cx, move |cx| {
+                    this.toggle_modal(window, cx, move |window, cx| {
                         ToolchainSelector::new(
                             weak,
                             project,
@@ -154,7 +154,7 @@ impl ToolchainSelectorDelegate {
                 let placeholder_text = format!("Select a {}…", term.to_lowercase()).into();
                 let _ = this.update(&mut cx, move |this, cx| {
                     this.delegate.placeholder_text = placeholder_text;
-                    this.refresh_placeholder(cx);
+                    this.refresh_placeholder(window, cx);
                 });
                 let available_toolchains = project
                     .update(&mut cx, |this, cx| {

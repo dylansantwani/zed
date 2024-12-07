@@ -56,12 +56,12 @@ impl MouseContextMenu {
             move |editor, _, _event: &DismissEvent, cx| {
                 editor.mouse_context_menu.take();
                 if context_menu_focus.contains_focused(cx) {
-                    editor.focus(window);
+                    editor.focus(window, cx);
                 }
             },
         );
 
-        let editor_snapshot = editor.snapshot(cx);
+        let editor_snapshot = editor.snapshot(window, cx);
         let source_point = editor.to_pixel_point(source, &editor_snapshot, cx)?;
         let offset = position - source_point;
 
@@ -89,7 +89,7 @@ impl MouseContextMenu {
             move |editor, _, _event: &DismissEvent, cx| {
                 editor.mouse_context_menu.take();
                 if context_menu_focus.contains_focused(cx) {
-                    editor.focus(window);
+                    editor.focus(window, cx);
                 }
             },
         );
@@ -124,7 +124,7 @@ pub fn deploy_context_menu(
     cx: &mut ModelContext<Editor>,
 ) {
     if !editor.is_focused(cx) {
-        editor.focus(window);
+        editor.focus(window, cx);
     }
 
     // Don't show context menu for inline editors
@@ -148,7 +148,7 @@ pub fn deploy_context_menu(
         }
 
         let display_map = editor.selections.display_map(cx);
-        let buffer = &editor.snapshot(cx).buffer_snapshot;
+        let buffer = &editor.snapshot(window, cx).buffer_snapshot;
         let anchor = buffer.anchor_before(point.to_point(&display_map));
         if !display_ranges(&display_map, &editor.selections).any(|r| r.contains(&point)) {
             // Move the cursor to the clicked location so that dispatched actions make sense

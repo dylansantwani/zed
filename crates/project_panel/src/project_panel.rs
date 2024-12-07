@@ -213,9 +213,9 @@ pub fn init(assets: impl AssetSource, cx: &mut AppContext) {
     init_settings(cx);
     file_icons::init(assets, cx);
 
-    cx.observe_new_views(|workspace: &mut Workspace, _| {
+    cx.observe_new_models(|workspace: &mut Workspace, _| {
         workspace.register_action(|workspace, _: &ToggleFocus, cx| {
-            workspace.toggle_panel_focus::<ProjectPanel>(cx);
+            workspace.toggle_panel_focus::<ProjectPanel>(window, cx);
         });
     })
     .detach();
@@ -414,7 +414,7 @@ impl ProjectPanel {
                                     None,
                                     focus_opened_item,
                                     allow_preview,
-                                    cx,
+                                    window, cx,
                                 )
                                 .detach_and_prompt_err("Failed to open file", cx, move |e, _| {
                                     match e.error_code() {
@@ -878,7 +878,7 @@ impl ProjectPanel {
 
     fn confirm(&mut self, _: &Confirm, cx: &mut ModelContext<Self>) {
         if let Some(task) = self.confirm_edit(cx) {
-            task.detach_and_notify_err(cx);
+            task.detach_and_notify_err(window, cx);
         }
     }
 
@@ -1113,7 +1113,7 @@ impl ProjectPanel {
             });
             self.filename_editor.update(cx, |editor, cx| {
                 editor.clear(cx);
-                editor.focus(window);
+                editor.focus(window, cx);
             });
             self.update_visible_entries(Some((worktree_id, NEW_ENTRY_ID)), cx);
             self.autoscroll(cx);
@@ -1165,7 +1165,7 @@ impl ProjectPanel {
                         editor.change_selections(Some(Autoscroll::fit()), cx, |s| {
                             s.select_ranges([0..selection_end])
                         });
-                        editor.focus(window);
+                        editor.focus(window, cx);
                     });
                     self.update_visible_entries(None, cx);
                     self.autoscroll(cx);
@@ -5557,7 +5557,7 @@ mod tests {
         // Make a new buffer with no backing file
         workspace
             .update(cx, |workspace, cx| {
-                Editor::new_file(workspace, &Default::default(), cx)
+                window::new_file(workspace, &Default::default(), c, cxx)
             })
             .unwrap();
 

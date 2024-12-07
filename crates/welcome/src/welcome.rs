@@ -6,7 +6,7 @@ use client::{telemetry::Telemetry, TelemetrySettings};
 use db::kvp::KEY_VALUE_STORE;
 use gpui::{
     actions, svg, Action, AppContext, EventEmitter, FocusHandle, FocusableView, InteractiveElement,
-    ParentElement, Render, Styled, Subscription, Task, View, ModelContext, VisualContext, WeakView,
+    ModelContext, ParentElement, Render, Styled, Subscription, Task, View, VisualContext, WeakView,
     WindowContext,
 };
 use settings::{Settings, SettingsStore};
@@ -31,10 +31,10 @@ const BOOK_ONBOARDING: &str = "https://dub.sh/zed-onboarding";
 pub fn init(cx: &mut AppContext) {
     BaseKeymap::register(cx);
 
-    cx.observe_new_views(|workspace: &mut Workspace, _cx| {
+    cx.observe_new_models(|workspace: &mut Workspace, _cx| {
         workspace.register_action(|workspace, _: &Welcome, cx| {
             let welcome_page = WelcomePage::new(workspace, cx);
-            workspace.add_item_to_active_pane(Box::new(welcome_page), None, true, cx)
+            workspace.add_item_to_active_pane(Box::new(welcome_page), None, true, window, cx)
         });
         workspace
             .register_action(|_workspace, _: &ResetHints, cx| MultibufferHint::set_count(0, cx));
@@ -174,7 +174,7 @@ impl Render for WelcomePage {
                                                 this.telemetry.report_app_event(
                                                     "welcome page: sign in to copilot".to_string(),
                                                 );
-                                                copilot::initiate_sign_in(cx);
+                                                copilot::initiate_sign_in(window, cx);
                                             }),
                                         ),
                                     )

@@ -85,7 +85,7 @@ impl RecentProjects {
     fn register(workspace: &mut Workspace, _cx: &mut ModelContext<Workspace>) {
         workspace.register_action(|workspace, open_recent: &OpenRecent, cx| {
             let Some(recent_projects) = workspace.active_modal::<Self>(cx) else {
-                Self::open(workspace, open_recent.create_new_window, cx);
+                Self::open(workspace, open_recent.create_new_window, window, cx);
                 return;
             };
 
@@ -100,10 +100,11 @@ impl RecentProjects {
     pub fn open(
         workspace: &mut Workspace,
         create_new_window: bool,
+        window: &mut Window,
         cx: &mut ModelContext<Workspace>,
     ) {
         let weak = cx.handle().downgrade();
-        workspace.toggle_modal(cx, |cx| {
+        workspace.toggle_modal(window, cx, |window, cx| {
             let delegate = RecentProjectsDelegate::new(weak, create_new_window, true);
 
             Self::new(delegate, 34., cx)

@@ -106,7 +106,7 @@ pub fn init(cx: &mut AppContext) {
                         return;
                     }
 
-                    workspace.toggle_panel_focus::<AssistantPanel>(cx);
+                    workspace.toggle_panel_focus::<AssistantPanel>(window, cx);
                 })
                 .register_action(AssistantPanel::inline_assist)
                 .register_action(ContextEditor::quote_selection)
@@ -803,7 +803,7 @@ impl AssistantPanel {
         };
 
         let Some(inline_assist_target) =
-            Self::resolve_inline_assist_target(workspace, &assistant_panel, cx)
+            Self::resolve_inline_assist_target(workspace, &assistant_panel, window, cx)
         else {
             return;
         };
@@ -819,6 +819,7 @@ impl AssistantPanel {
                             Some(cx.handle().downgrade()),
                             include_context.then_some(&assistant_panel),
                             initial_prompt,
+                            window,
                             cx,
                         )
                     })
@@ -830,6 +831,7 @@ impl AssistantPanel {
                             Some(cx.handle().downgrade()),
                             Some(&assistant_panel),
                             initial_prompt,
+                            window,
                             cx,
                         )
                     })
@@ -873,6 +875,7 @@ impl AssistantPanel {
                                     Some(workspace),
                                     assistant_panel.as_ref(),
                                     initial_prompt,
+                                    window,
                                     cx,
                                 )
                             })
@@ -884,6 +887,7 @@ impl AssistantPanel {
                                     Some(workspace),
                                     assistant_panel.upgrade().as_ref(),
                                     initial_prompt,
+                                    window,
                                     cx,
                                 )
                             })
@@ -1121,7 +1125,7 @@ impl AssistantPanel {
         };
 
         if !panel.focus_handle(cx).contains_focused(cx) {
-            workspace.toggle_panel_focus::<AssistantPanel>(cx);
+            workspace.toggle_panel_focus::<AssistantPanel>(window, cx);
         }
 
         panel.update(cx, |this, cx| {
@@ -1721,7 +1725,7 @@ impl ContextEditor {
     }
 
     fn cycle_message_role(&mut self, _: &CycleMessageRole, cx: &mut ModelContext<Self>) {
-        let cursors = self.cursors(cx);
+        let cursors = self.cursors(window, cx);
         self.context.update(cx, |context, cx| {
             let messages = context
                 .messages_for_offsets(cursors, cx)
@@ -1840,6 +1844,7 @@ impl ContextEditor {
                 snapshot,
                 workspace,
                 self.lsp_adapter_delegate.clone(),
+                window,
                 cx,
             );
             self.context.update(cx, |context, cx| {
@@ -1881,7 +1886,7 @@ impl ContextEditor {
                     // todo! remove annotation on cx
                     .update(cx, |editor, cx: &mut ModelContext<Editor>| {
                         if let Some(scroll_position) = self.scroll_position {
-                            let snapshot = editor.snapshot(cx);
+                            let snapshot = editor.snapshot(window, cx);
                             let cursor_point = scroll_position.cursor.to_display_point(&snapshot);
                             let scroll_top = cursor_point.row().as_f32()
                                 - scroll_position.offset_before_cursor.y;
@@ -2032,6 +2037,7 @@ impl ContextEditor {
                                         return render_docs_slash_command_trailer(
                                             row,
                                             command.clone(),
+                                            window,
                                             cx,
                                         );
                                     }
@@ -2077,7 +2083,7 @@ impl ContextEditor {
 
                 for tool_use in pending_tool_uses {
                     if let Some(tool) = self.tools.tool(&tool_use.name, cx) {
-                        let task = tool.run(tool_use.input, self.workspace.clone(), cx);
+                        let task = tool.run(tool_use.input, self.workspace.clone(), window, cx);
 
                         self.context.update(cx, |context, cx| {
                             context.insert_tool_output(tool_use.id.clone(), task, cx);
@@ -2250,7 +2256,7 @@ impl ContextEditor {
         let mut editors_to_close = Vec::new();
 
         self.editor.update(cx, |editor, cx| {
-            let snapshot = editor.snapshot(cx);
+            let snapshot = editor.snapshot(window, cx);
             let multibuffer = &snapshot.buffer_snapshot;
             let (&excerpt_id, _, _) = multibuffer.as_singleton().unwrap();
 
@@ -2480,7 +2486,7 @@ impl ContextEditor {
                 if let Some(editor) = editor {
                     self.workspace
                         .update(cx, |workspace, cx| {
-                            workspace.activate_item(&editor, true, false, cx);
+                            workspace.activate_item(&editor, true, false, window, cx);
                         })
                         .ok();
                 } else {
@@ -2552,7 +2558,13 @@ impl ContextEditor {
 
             this.workspace
                 .update(cx, |workspace, cx| {
-                    workspace.add_item_to_active_pane(Box::new(editor.clone()), None, false, cx)
+                    workspace.add_item_to_active_pane(
+                        Box::new(editor.clone()),
+                        None,
+                        false,
+                        window,
+                        cx,
+                    )
                 })
                 .log_err();
         })?;
@@ -2613,7 +2625,7 @@ impl ContextEditor {
 
     fn cursor_scroll_position(&self, cx: &mut ModelContext<Self>) -> Option<ScrollPosition> {
         self.editor.update(cx, |editor, cx| {
-            let snapshot = editor.snapshot(cx);
+            let snapshot = editor.snapshot(window, cx);
             let cursor = editor.selections.newest_anchor().head();
             let cursor_row = cursor
                 .to_display_point(&snapshot.display_snapshot)
@@ -2967,7 +2979,7 @@ impl ContextEditor {
         if let Some((text, _)) = Self::get_selection_or_code_block(&context_editor_view, cx) {
             active_editor_view.update(cx, |editor, cx| {
                 editor.insert(&text, cx);
-                editor.focus(window);
+                editor.focus(window, cx);
             })
         }
     }
@@ -3094,7 +3106,7 @@ impl ContextEditor {
         }
         // Activate the panel
         if !panel.focus_handle(cx).contains_focused(cx) {
-            workspace.toggle_panel_focus::<AssistantPanel>(cx);
+            workspace.toggle_panel_focus::<AssistantPanel>(window, cx);
         }
 
         panel.update(cx, |_, cx| {
@@ -3481,7 +3493,9 @@ impl ContextEditor {
         selected: bool,
         cx: &mut ModelContext<Self>,
     ) -> Option<AnyElement> {
-        let snapshot = self.editor.update(cx, |editor, cx| editor.snapshot(cx));
+        let snapshot = self
+            .editor
+            .update(cx, |editor, cx| editor.snapshot(window, cx));
         let (excerpt_id, _buffer_id, _) = snapshot.buffer_snapshot.as_singleton().unwrap();
         let excerpt_id = *excerpt_id;
         let anchor = snapshot

@@ -132,7 +132,7 @@ impl ProjectPicker {
             let picker = Picker::uniform_list(delegate, cx)
                 .width(rems(34.))
                 .modal(false);
-            picker.set_query(query, cx);
+            picker.set_query(query, window, cx);
             picker
         });
         let connection_string = connection.connection_string().into();
@@ -195,8 +195,9 @@ impl ProjectPicker {
                         })
                         .detach_and_prompt_err(
                             "Failed to open path",
+                            window,
                             cx,
-                            |_, _| None,
+                            |_, _, _| None,
                         );
 
                         cx.new_model(|cx| {
@@ -317,14 +318,14 @@ impl RemoteServerProjects {
     pub fn register(workspace: &mut Workspace, _: &mut ModelContext<Workspace>) {
         workspace.register_action(|workspace, _: &OpenRemote, cx| {
             let handle = cx.handle().downgrade();
-            workspace.toggle_modal(cx, |cx| Self::new(cx, handle))
+            workspace.toggle_modal(window, cx, |cx| Self::new(cx, handle))
         });
     }
 
     pub fn open(workspace: Model<Workspace>, window: &mut Window, cx: &mut AppContext) {
         workspace.update(cx, |workspace, cx| {
             let handle = cx.handle().downgrade();
-            workspace.toggle_modal(cx, |cx| Self::new(cx, handle))
+            workspace.toggle_modal(window, cx, |cx| Self::new(cx, handle))
         })
     }
 
@@ -366,7 +367,7 @@ impl RemoteServerProjects {
     }
 
     fn create_ssh_server(&mut self, editor: Model<Editor>, cx: &mut ModelContext<Self>) {
-        let input = get_text(&editor, cx);
+        let input = get_text(&editor, window, cx);
         if input.is_empty() {
             return;
         }
@@ -389,9 +390,10 @@ impl RemoteServerProjects {
             ConnectionIdentifier::setup(),
             connection_options.clone(),
             ssh_prompt.clone(),
+            window,
             cx,
         )
-        .prompt_err("Failed to connect", cx, |_, _| None);
+        .prompt_err("Failed to connect", window, cx, |_, _, _| None);
 
         let address_editor = editor.clone();
         let creating = cx.spawn(move |this, mut cx| async move {
@@ -466,7 +468,7 @@ impl RemoteServerProjects {
         let connection_options = ssh_connection.into();
         workspace.update(cx, |_, cx| {
             cx.defer(move |workspace, cx| {
-                workspace.toggle_modal(cx, |cx| {
+                workspace.toggle_modal(window, cx, |window, cx| {
                     SshConnectionModal::new(&connection_options, Vec::new(), cx)
                 });
                 let prompt = workspace
@@ -480,9 +482,10 @@ impl RemoteServerProjects {
                     ConnectionIdentifier::setup(),
                     connection_options.clone(),
                     prompt,
+                    window,
                     cx,
                 )
-                .prompt_err("Failed to connect", cx, |_, _| None);
+                .prompt_err("Failed to connect", window, cx, |_, _, _| None);
 
                 cx.spawn(move |workspace, mut cx| async move {
                     let session = connect.await;
@@ -519,7 +522,7 @@ impl RemoteServerProjects {
                                 app_state.fs.clone(),
                                 cx,
                             );
-                            workspace.toggle_modal(cx, |cx| {
+                            workspace.toggle_modal(window, cx, |window, cx| {
                                 RemoteServerProjects::project_picker(
                                     ix,
                                     connection_options,
@@ -570,7 +573,7 @@ impl RemoteServerProjects {
         match &self.mode {
             Mode::Default(_) => cx.emit(DismissEvent),
             Mode::CreateRemoteServer(state) if state.ssh_prompt.is_some() => {
-                let new_state = CreateRemoteServer::new(cx);
+                let new_state = CreateRemoteServer::new(window, cx);
                 let old_prompt = state.address_editor.read(cx).text(cx);
                 new_state.address_editor.update(cx, |this, cx| {
                     this.set_text(old_prompt, cx);
@@ -946,6 +949,7 @@ impl RemoteServerProjects {
             connection,
             entries,
         }: ViewServerOptionsState,
+        window: &mut Window,
         cx: &mut ModelContext<Self>,
     ) -> impl IntoElement {
         let connection_string = connection.host.clone();
@@ -975,13 +979,16 @@ impl RemoteServerProjects {
                             div()
                                 .id("ssh-options-add-nickname")
                                 .track_focus(&entries[0].focus_handle)
-                                .on_action(cx.listener(move |this, _: &menu::Confirm, cx| {
-                                    this.mode = Mode::EditNickname(EditNicknameState::new(
-                                        server_index,
-                                        cx,
-                                    ));
-                                    cx.notify();
-                                }))
+                                .on_action(cx.listener(
+                                    move |this, _: &menu::Confirm, window, cx| {
+                                        this.mode = Mode::EditNickname(EditNicknameState::new(
+                                            server_index,
+                                            window,
+                                            cx,
+                                        ));
+                                        cx.notify();
+                                    },
+                                ))
                                 .child(
                                     ListItem::new("add-nickname")
                                         .selected(entries[0].focus_handle.contains_focused(cx))
@@ -989,10 +996,11 @@ impl RemoteServerProjects {
                                         .spacing(ui::ListItemSpacing::Sparse)
                                         .start_slot(Icon::new(IconName::Pencil).color(Color::Muted))
                                         .child(Label::new(label))
-                                        .on_click(cx.listener(move |this, _, cx| {
+                                        .on_click(cx.listener(move |this, _, window, cx| {
                                             this.mode = Mode::EditNickname(EditNicknameState::new(
                                                 server_index,
                                                 cx,
+                                                window,
                                             ));
                                             cx.notify();
                                         })),
@@ -1039,7 +1047,12 @@ impl RemoteServerProjects {
                                     let connection_string = connection_string.clone();
                                     let workspace = self.workspace.clone();
                                     move |_: &menu::Confirm, cx| {
-                                        callback(workspace.clone(), connection_string.clone(), cx);
+                                        window(
+                                            workspace.clone(),
+                                            connection_string.clone(),
+                                            cx,
+                                            cx,
+                                        );
                                     }
                                 })
                                 .child(
@@ -1059,6 +1072,7 @@ impl RemoteServerProjects {
                                                 callback(
                                                     workspace.clone(),
                                                     connection_string.clone(),
+                                                    window,
                                                     cx,
                                                 );
                                             }
@@ -1111,6 +1125,7 @@ impl RemoteServerProjects {
                                             cx.handle().clone(),
                                             server_index,
                                             connection_string.clone(),
+                                            window,
                                             cx,
                                         );
                                         cx.focus_self();
@@ -1128,6 +1143,7 @@ impl RemoteServerProjects {
                                                 cx.handle().clone(),
                                                 server_index,
                                                 connection_string.clone(),
+                                                window,
                                                 cx,
                                             );
                                             cx.focus_self();
@@ -1240,15 +1256,15 @@ impl RemoteServerProjects {
                     .spacing(ui::ListItemSpacing::Sparse)
                     .start_slot(Icon::new(IconName::Plus).color(Color::Muted))
                     .child(Label::new("Connect New Server"))
-                    .on_click(cx.listener(|this, _, cx| {
-                        let state = CreateRemoteServer::new(cx);
+                    .on_click(cx.listener(|this, _, _window, cx| {
+                        let state = CreateRemoteServer::new(window, cx);
                         this.mode = Mode::CreateRemoteServer(state);
 
                         cx.notify();
                     })),
             )
-            .on_action(cx.listener(|this, _: &menu::Confirm, cx| {
-                let state = CreateRemoteServer::new(cx);
+            .on_action(cx.listener(|this, _: &menu::Confirm, _window, cx| {
+                let state = CreateRemoteServer::new(window, cx);
                 this.mode = Mode::CreateRemoteServer(state);
 
                 cx.notify();
@@ -1379,7 +1395,7 @@ impl Render for RemoteServerProjects {
             .child(match &self.mode {
                 Mode::Default(state) => self.render_default(state.clone(), cx).into_any_element(),
                 Mode::ViewServerOptions(state) => self
-                    .render_view_options(state.clone(), cx)
+                    .render_view_options(state.clone(), window, cx)
                     .into_any_element(),
                 Mode::ProjectPicker(element) => element.clone().into_any_element(),
                 Mode::CreateRemoteServer(state) => self

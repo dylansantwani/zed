@@ -82,7 +82,7 @@ impl ChannelModal {
             let delegate = &mut picker.delegate;
             delegate.mode = mode;
             delegate.selected_index = 0;
-            picker.set_query("", cx);
+            picker.set_query("", window, cx);
             picker.update_matches(picker.query(cx), cx);
             cx.notify()
         });
@@ -490,7 +490,7 @@ impl ChannelModalDelegate {
                 cx.notify();
             })
         })
-        .detach_and_prompt_err("Failed to update role", cx, |_, _| None);
+        .detach_and_prompt_err("Failed to update role", window, cx, |_, _, _| None);
         Some(())
     }
 
@@ -522,11 +522,11 @@ impl ChannelModalDelegate {
                     .selected_index
                     .min(this.matching_member_indices.len().saturating_sub(1));
 
-                picker.focus(window);
+                picker.focus(window, cx);
                 cx.notify();
             })
         })
-        .detach_and_prompt_err("Failed to remove member", cx, |_, _| None);
+        .detach_and_prompt_err("Failed to remove member", window, cx, |_, _, _| None);
         Some(())
     }
 
@@ -552,7 +552,7 @@ impl ChannelModalDelegate {
                 cx.notify();
             })
         })
-        .detach_and_prompt_err("Failed to invite member", cx, |_, _| None);
+        .detach_and_prompt_err("Failed to invite member", window, cx, |_, _, _| None);
     }
 
     fn show_context_menu(&mut self, ix: usize, cx: &mut ModelContext<Picker<Self>>) {
@@ -617,7 +617,7 @@ impl ChannelModalDelegate {
         cx.focus_view(&context_menu, window);
         let subscription = cx.subscribe(&context_menu, |picker, _, _: &DismissEvent, cx| {
             picker.delegate.context_menu = None;
-            picker.focus(window);
+            picker.focus(window, cx);
             cx.notify();
         });
         self.context_menu = Some((context_menu, subscription));

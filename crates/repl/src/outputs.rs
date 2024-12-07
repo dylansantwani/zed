@@ -108,7 +108,7 @@ impl<V: OutputContent + 'static> OutputContent for Model<V> {
         window: &mut Window,
         cx: &mut AppContext,
     ) -> Option<Model<Buffer>> {
-        self.update(cx, |item, cx| item.buffer_content(cx))
+        self.update(cx, |item, cx| item.buffer_content(window, cx))
     }
 }
 
@@ -179,7 +179,7 @@ impl Output {
 
                             move |_, _, cx| {
                                 let buffer_content =
-                                    v.update(cx, |item, cx| item.buffer_content(cx));
+                                    v.update(cx, |item, cx| item.buffer_content(window, cx));
 
                                 if let Some(buffer_content) = buffer_content.as_ref() {
                                     let buffer = buffer_content.clone();
@@ -222,7 +222,7 @@ impl Output {
             Self::Image { content, .. } => Some(content.clone().into_any_element()),
             Self::Message(message) => Some(div().child(message.clone()).into_any_element()),
             Self::Table { content, .. } => Some(content.clone().into_any_element()),
-            Self::ErrorOutput(error_view) => error_view.render(cx),
+            Self::ErrorOutput(error_view) => error_view.render(window, cx),
             Self::ClearOutputWaitMarker => None,
         };
 
@@ -275,7 +275,7 @@ impl Output {
     ) -> Self {
         match data.richest(rank_mime_type) {
             Some(MimeType::Plain(text)) => Output::Plain {
-                content: cx.new_model(|cx| TerminalOutput::from(text, cx)),
+                content: cx.new_model(|cx| TerminalOutput::from(text, window, cx)),
                 display_id,
             },
             Some(MimeType::Markdown(text)) => {
@@ -293,7 +293,7 @@ impl Output {
                 Err(error) => Output::Message(format!("Failed to load image: {}", error)),
             },
             Some(MimeType::DataTable(data)) => Output::Table {
-                content: cx.new_model(|cx| TableView::new(data, cx)),
+                content: cx.new_model(|cx| TableView::new(data, window, cx)),
                 display_id,
             },
             // Any other media types are not supported
@@ -345,11 +345,15 @@ impl ExecutionView {
             JupyterMessageContent::ExecuteResult(result) => Output::new(
                 &result.data,
                 result.transient.as_ref().and_then(|t| t.display_id.clone()),
+                window,
                 cx,
             ),
-            JupyterMessageContent::DisplayData(result) => {
-                Output::new(&result.data, result.transient.display_id.clone(), cx)
-            }
+            JupyterMessageContent::DisplayData(result) => Output::new(
+                &result.data,
+                result.transient.display_id.clone(),
+                window,
+                cx,
+            ),
             JupyterMessageContent::StreamContent(result) => {
                 // Previous stream data will combine together, handling colors, carriage returns, etc
                 if let Some(new_terminal) = self.apply_terminal_text(&result.text, cx) {
@@ -359,8 +363,8 @@ impl ExecutionView {
                 }
             }
             JupyterMessageContent::ErrorOutput(result) => {
-                let terminal =
-                    cx.new_model(|cx| TerminalOutput::from(&result.traceback.join("\n"), cx));
+                let terminal = cx
+                    .new_model(|cx| TerminalOutput::from(&result.traceback.join("\n"), window, cx));
 
                 Output::ErrorOutput(ErrorView {
                     ename: result.ename.clone(),
@@ -371,7 +375,7 @@ impl ExecutionView {
             JupyterMessageContent::ExecuteReply(reply) => {
                 for payload in reply.payload.iter() {
                     if let runtimelib::Payload::Page { data, .. } = payload {
-                        let output = Output::new(data, None, cx);
+                        let output = Output::new(data, None, window, cx);
                         self.outputs.push(output);
                     }
                 }
@@ -426,7 +430,7 @@ impl ExecutionView {
         self.outputs.iter_mut().for_each(|output| {
             if let Some(other_display_id) = output.display_id().as_ref() {
                 if other_display_id == display_id {
-                    *output = Output::new(data, Some(display_id.to_owned()), cx);
+                    *output = Output::new(data, Some(display_id.to_owned()), window, cx);
                     any = true;
                 }
             }
@@ -446,7 +450,7 @@ impl ExecutionView {
                 // Don't need to add a new output, we already have a terminal output
                 // and can just update the most recent terminal output
                 last_stream.update(cx, |last_stream, cx| {
-                    last_stream.append_text(text, cx);
+                    last_stream.append_text(text, window, cx);
                     cx.notify();
                 });
                 return None;

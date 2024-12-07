@@ -380,7 +380,7 @@ impl PickerDelegate for TasksModalDelegate {
                     item
                 })
                 .selected(selected)
-                .child(highlighted_location.render(cx)),
+                .child(highlighted_location.render(window, cx)),
         )
     }
 
@@ -461,7 +461,7 @@ impl PickerDelegate for TasksModalDelegate {
                             secondary: current_modifiers.secondary(),
                         }
                         .boxed_clone();
-                        this.children(KeyBinding::for_action(&*action, cx).map(
+                        this.children(KeyBinding::for_action(&*action, window, cx).map(
                             |keybinwindow, d| {
                                 let spawn_oneshot_label = if current_modifiers.secondary() {
                                     "Spawn Oneshot Without History"
@@ -477,23 +477,24 @@ impl PickerDelegate for TasksModalDelegate {
                         ))
                     } else if current_modifiers.secondary() {
                         this.children(
-                            KeyBinding::for_action(&menu::SecondaryConfirm, cx).window,
-                            map(|keybind| {
-                                let label = if is_recent_selected {
-                                    "Rerun Without History"
-                                } else {
-                                    "Spawn Without History"
-                                };
-                                Button::new("spawn", label)
-                                    .label_size(LabelSize::Small)
-                                    .key_binding(keybind)
-                                    .on_click(move |_, cx| {
-                                        cx.dispatch_action(menu::SecondaryConfirm.boxed_clone())
-                                    })
-                            }),
+                            KeyBinding::for_action(&menu::SecondaryConfirm, window, cx)
+                                .window
+                                .map(|keybind| {
+                                    let label = if is_recent_selected {
+                                        "Rerun Without History"
+                                    } else {
+                                        "Spawn Without History"
+                                    };
+                                    Button::new("spawn", label)
+                                        .label_size(LabelSize::Small)
+                                        .key_binding(keybind)
+                                        .on_click(move |_, cx| {
+                                            cx.dispatch_action(menu::SecondaryConfirm.boxed_clone())
+                                        })
+                                }),
                         )
                     } else {
-                        this.children(KeyBinding::for_action(&menu::Confirm, cx).map(
+                        this.children(KeyBinding::for_action(&menu::Confirm, window, cx).map(
                             |keybinwindow, d| {
                                 let run_entry_label =
                                     if is_recent_selected { "Rerun" } else { "Spawn" };
@@ -569,7 +570,7 @@ mod tests {
         .await;
 
         let project = Project::test(fs, ["/dir".as_ref()], cx).await;
-        let (workspace, cx) = cx.add_window_view(|cx| Workspace::test_new(project, cx));
+        let (workspace, cx) = cx.add_window_view(|window, cx| Workspace::test_new(project, cx));
 
         let tasks_picker = open_spawn_tasks(&workspace, cx);
         assert_eq!(
@@ -732,7 +733,8 @@ mod tests {
         .await;
 
         let project = Project::test(fs, ["/dir".as_ref()], cx).await;
-        let (workspace, cx) = cx.add_window_view(|cx| Workspace::test_new(project.clone(), cx));
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), cx));
 
         let tasks_picker = open_spawn_tasks(&workspace, cx);
         assert_eq!(
@@ -868,7 +870,8 @@ mod tests {
                 ))),
             ));
         });
-        let (workspace, cx) = cx.add_window_view(|cx| Workspace::test_new(project.clone(), cx));
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), cx));
 
         let _ts_file_1 = workspace
             .update(cx, |workspace, cx| {

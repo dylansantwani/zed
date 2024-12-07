@@ -1,7 +1,7 @@
 use anyhow::Result;
 use gpui::{
     prelude::*, px, Action, AppContext, AsyncWindowContext, EventEmitter, FocusHandle,
-    FocusableView, Pixels, Task, View, ModelContext, WeakView, WindowContext,
+    FocusableView, ModelContext, Pixels, Task, View, WeakView, WindowContext,
 };
 use language_model::LanguageModelRegistry;
 use language_model_selector::LanguageModelSelector;
@@ -16,7 +16,7 @@ pub fn init(cx: &mut AppContext) {
     cx.observe_new_models(
         |workspace: &mut Workspace, _cx: &mut ModelContext<Workspace>| {
             workspace.register_action(|workspace, _: &ToggleFocus, cx| {
-                workspace.toggle_panel_focus::<AssistantPanel>(cx);
+                workspace.toggle_panel_focus::<AssistantPanel>(window, cx);
             });
         },
     )

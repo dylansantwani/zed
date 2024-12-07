@@ -102,7 +102,7 @@ impl Replayer {
         }
         lock.running = true;
         let this = self.clone();
-        cx.defer(move |cx| this.next(cx))
+        cx.defer(move |cx| this.next(window, cx))
     }
 
     pub fn stop(self) {
@@ -126,7 +126,7 @@ impl Replayer {
         match action {
             ReplayableAction::Action(action) => {
                 if should_replay(&*action) {
-                    cx.dispatch_action(action.boxed_clone());
+                    window.dispatch_action(action.boxed_clone(), cx);
                     cx.defer(move |cx| Vim::globals(cx).observe_action(action.boxed_clone()));
                 }
             }
@@ -149,7 +149,7 @@ impl Replayer {
                     .log_err();
             }
         }
-        cx.defer(move |cx| self.next(cx));
+        cx.defer(move |cx| self.next(window, cx));
     }
 }
 

@@ -327,7 +327,7 @@ impl PromptLibrary {
             let picker = Picker::uniform_list(delegate, cx)
                 .modal(false)
                 .max_height(None);
-            picker.focus(window);
+            picker.focus(window, cx);
             picker
         });
         Self {
@@ -532,7 +532,7 @@ impl PromptLibrary {
                                 ),
                             )));
                             if focus {
-                                editor.focus(window);
+                                editor.focus(window, cx);
                             }
                             editor
                         });
@@ -695,7 +695,7 @@ impl PromptLibrary {
         let initial_prompt = action.prompt.clone();
         if provider.is_authenticated(cx) {
             InlineAssistant::update_global(cx, |assistant, cx| {
-                assistant.assist(&prompt_editor, None, None, initial_prompt, cx)
+                assistant.assist(&prompt_editor, None, None, initial_prompt, window, cx)
             })
         } else {
             for window in cx.windows() {

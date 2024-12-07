@@ -29,7 +29,7 @@ pub fn toggle(
 ) {
     let fs = workspace.app_state().fs.clone();
     let telemetry = workspace.client().telemetry().clone();
-    workspace.toggle_modal(cx, |cx| {
+    workspace.toggle_modal(window, cx, |window, cx| {
         BaseKeymapSelector::new(
             BaseKeymapSelectorDelegate::new(cx.handle().downgrade(), fs, telemetry, cx),
             cx,

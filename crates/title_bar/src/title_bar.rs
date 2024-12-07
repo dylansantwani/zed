@@ -73,7 +73,7 @@ pub struct TitleBar {
 impl Render for TitleBar {
     fn render(&mut self, cx: &mut ModelContext<Self>) -> impl IntoElement {
         let close_action = Box::new(workspace::CloseWindow);
-        let height = Self::height(cx);
+        let height = Self::height(window, cx);
         let supported_controls = cx.window_controls();
         let decorations = cx.window_decorations();
         let titlebar_color = if cfg!(any(target_os = "linux", target_os = "freebsd")) {
@@ -411,6 +411,7 @@ impl TitleBar {
                     &zed_actions::OpenRecent {
                         create_new_window: false,
                     },
+                    window,
                     cx,
                 )
             })

@@ -62,7 +62,7 @@ impl QuickActionBar {
             })
         };
 
-        let session = repl::session(editor.downgrade(), cx);
+        let session = repl::session(editor.downgrade(), window, cx);
         let session = match session {
             SessionSupport::ActiveSession(session) => session,
             SessionSupport::Inactive(spec) => {
@@ -141,7 +141,7 @@ impl QuickActionBar {
                         {
                             let editor = editor.clone();
                             move |cx| {
-                                repl::run(editor.clone(), true, cx).log_err();
+                                repl::run(editor.clone(), true, window, cx).log_err();
                             }
                         },
                     )
@@ -155,7 +155,7 @@ impl QuickActionBar {
                         {
                             let editor = editor.clone();
                             move |cx| {
-                                repl::interrupt(editor.clone(), cx);
+                                repl::interrupt(editor.clone(), window, cx);
                             }
                         },
                     )
@@ -169,7 +169,7 @@ impl QuickActionBar {
                         {
                             let editor = editor.clone();
                             move |cx| {
-                                repl::clear_outputs(editor.clone(), cx);
+                                repl::clear_outputs(editor.clone(), window, cx);
                             }
                         },
                     )
@@ -184,7 +184,7 @@ impl QuickActionBar {
                         {
                             let editor = editor.clone();
                             move |cx| {
-                                repl::shutdown(editor.clone(), cx);
+                                repl::shutdown(editor.clone(), window, cx);
                             }
                         },
                     )
@@ -198,7 +198,7 @@ impl QuickActionBar {
                         {
                             let editor = editor.clone();
                             move |cx| {
-                                repl::restart(editor.clone(), cx);
+                                repl::restart(editor.clone(), window, cx);
                             }
                         },
                     )
@@ -283,11 +283,11 @@ impl QuickActionBar {
             return div().into_any_element();
         };
 
-        let Some(worktree_id) = worktree_id_for_editor(editor.downgrade(), cx) else {
+        let Some(worktree_id) = worktree_id_for_editor(editor.downgrade(), window, cx) else {
             return div().into_any_element();
         };
 
-        let session = repl::session(editor.downgrade(), cx);
+        let session = repl::session(editor.downgrade(), window, cx);
 
         let current_kernelspec = match session {
             SessionSupport::ActiveSession(view) => Some(view.read(cx).kernel_specification.clone()),
@@ -303,7 +303,7 @@ impl QuickActionBar {
         KernelSelector::new(
             {
                 Box::new(move |kernelspec, cx| {
-                    repl::assign_kernelspec(kernelspec, editor.downgrade(), cx).ok();
+                    repl::assign_kernelspec(kernelspec, editor.downgrade(), window, cx).ok();
                 })
             },
             worktree_id,

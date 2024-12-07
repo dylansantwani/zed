@@ -42,7 +42,7 @@ impl LanguageSelector {
             .active_excerpt(cx)?;
         let project = workspace.project().clone();
 
-        workspace.toggle_modal(cx, move |cx| {
+        workspace.toggle_modal(window, cx, move |cx| {
             LanguageSelector::new(buffer, project, registry, cx)
         });
         Some(())

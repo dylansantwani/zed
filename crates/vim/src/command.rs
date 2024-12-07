@@ -134,7 +134,7 @@ pub fn register(editor: &mut Editor, cx: &mut ModelContext<Vim>) {
 
     Vim::action(editor, cx, |vim, action: &YankCommand, cx| {
         vim.update_editor(cx, |vim, editor, cx| {
-            let snapshot = editor.snapshot(cx);
+            let snapshot = editor.snapshot(window, cx);
             if let Ok(range) = action.range.buffer_range(vim, editor, cwindow, x) {
                 let end = if range.end < snapshot.max_buffer_row() {
                     Point::new(range.end.0 + 1, 0)
@@ -152,9 +152,9 @@ pub fn register(editor: &mut Editor, cx: &mut ModelContext<Vim>) {
         });
     });
 
-    Vim::action(editor, cx, |_, action: &WithCount, cx| {
+    Vim::action(editor, cx, |_, action: &WithCount, window, cx| {
         for _ in 0..action.count {
-            cx.dispatch_action(action.action.boxed_clone())
+            window.dispatch_action(action.action.boxed_clone(), cx)
         }
     });
 
@@ -189,7 +189,7 @@ pub fn register(editor: &mut Editor, cx: &mut ModelContext<Vim>) {
                 selections
             })
             .flatten();
-        cx.dispatch_action(action.action.boxed_clone());
+        window.dispatch_action(action.action.boxed_clone(), cx);
         cx.defer(move |vim, cx| {
             vim.update_editor(cx, |_, editor, cx| {
                 editor.change_selections(None, cx, |s| {
@@ -426,7 +426,7 @@ impl Position {
         window: &mut Window,
         cx: &mut AppContext,
     ) -> Result<MultiBufferRow> {
-        let snapshot = editor.snapshot(cx);
+        let snapshot = editor.snapshot(window, cx);
         let target = match self {
             Position::Line { row, offset } => row.saturating_add_signed(offset.saturating_sub(1)),
             Position::Mark { name, offset } => {

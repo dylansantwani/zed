@@ -61,7 +61,7 @@ impl EditorTestContext {
         let editor = cx.add_window(|cx| {
             let editor =
                 build_editor_with_project(project, MultiBuffer::build_from_buffer(buffer, cx), cx);
-            editor.focus(window);
+            editor.focus(window, cx);
             editor
         });
         let editor_view = editor.root_view(cx).unwrap();
@@ -116,7 +116,7 @@ impl EditorTestContext {
 
         let editor = cx.add_window(|cx| {
             let editor = build_editor(buffer, cx);
-            editor.focus(window);
+            editor.focus(window, cx);
             editor
         });
 
@@ -258,7 +258,7 @@ impl EditorTestContext {
                 .unwrap()
                 .text
                 .line_height_in_pixels(cx.rem_size());
-            let snapshot = editor.snapshot(cx);
+            let snapshot = editor.snapshot(window, cx);
             let details = editor.text_layout_details(cx);
 
             let y = pixel_position.y
@@ -409,7 +409,7 @@ impl EditorTestContext {
     pub fn assert_editor_background_highlights<Tag: 'static>(&mut self, marked_text: &str) {
         let expected_ranges = self.ranges(marked_text);
         let actual_ranges: Vec<Range<usize>> = self.update_editor(|editor, cx| {
-            let snapshot = editor.snapshot(cx);
+            let snapshot = editor.snapshot(window, cx);
             editor
                 .background_highlights
                 .get(&TypeId::of::<Tag>())
@@ -425,7 +425,7 @@ impl EditorTestContext {
     #[track_caller]
     pub fn assert_editor_text_highlights<Tag: ?Sized + 'static>(&mut self, marked_text: &str) {
         let expected_ranges = self.ranges(marked_text);
-        let snapshot = self.update_editor(|editor, cx| editor.snapshot(cx));
+        let snapshot = self.update_editor(|editor, cx| editor.snapshot(window, cx));
         let actual_ranges: Vec<Range<usize>> = snapshot
             .text_highlight_ranges::<Tag>()
             .map(|ranges| ranges.as_ref().clone().1)

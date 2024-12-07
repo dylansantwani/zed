@@ -30,10 +30,10 @@ pub fn init(cx: &mut AppContext) {
                 .find_map(|item| item.downcast::<SettingsPage>());
 
             if let Some(existing) = existing {
-                workspace.activate_item(&existing, true, true, cx);
+                workspace.activate_item(&existing, true, true, window, cx);
             } else {
                 let settings_page = SettingsPage::new(workspace, cx);
-                workspace.add_item_to_active_pane(Box::new(settings_page), None, true, cx)
+                workspace.add_item_to_active_pane(Box::new(settings_page), None, true, window, cx)
             }
         });
 

@@ -43,7 +43,7 @@ pub fn init(cx: &mut AppContext) {
                             if let Some(use_new_terminal) = action.use_new_terminal {
                                 original_task.use_new_terminal = use_new_terminal;
                             }
-                            let context_task = task_context(workspace, cx);
+                            let context_task = task_context(workspace, window, cx);
                             cx.spawn(|workspace, mut cx| async move {
                                 let task_context = context_task.await;
                                 workspace
@@ -110,7 +110,7 @@ fn toggle_modal(workspace: &mut Workspace, cx: &mut ModelContext<'_, Workspace>)
             let task_context = context_task.await;
             workspace
                 .update(&mut cx, |workspace, cx| {
-                    workspace.toggle_modal(cx, |cx| {
+                    workspace.toggle_modal(window, cx, |cx| {
                         TasksModal::new(task_store.clone(), task_context, workspace_handle, cx)
                     })
                 })
@@ -297,7 +297,8 @@ mod tests {
         let worktree_id = project.update(cx, |project, cx| {
             project.worktrees(cx).next().unwrap().read(cx).id()
         });
-        let (workspace, cx) = cx.add_window_view(|cx| Workspace::test_new(project.clone(), cx));
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), cx));
 
         let buffer1 = workspace
             .update(cx, |this, cx| {

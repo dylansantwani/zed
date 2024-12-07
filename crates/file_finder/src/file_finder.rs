@@ -141,7 +141,7 @@ impl FileFinder {
                 .update(&mut cx, |workspace, cx| {
                     let project = workspace.project().clone();
                     let weak_workspace = cx.handle().downgrade();
-                    workspace.toggle_modal(cx, |cx| {
+                    workspace.toggle_modal(window, cx, |window, cx| {
                         let delegate = FileFinderDelegate::new(
                             cx.handle().downgrade(),
                             weak_workspace,
@@ -1086,6 +1086,7 @@ impl PickerDelegate for FileFinderDelegate {
                                     None,
                                     true,
                                     allow_preview,
+                                    window,
                                     cx,
                                 )
                             }

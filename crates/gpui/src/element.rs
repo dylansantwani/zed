@@ -180,6 +180,58 @@ impl<T: Render> Element for Model<T> {
     }
 }
 
+impl Element for AnyView {
+    type RequestLayoutState = AnyElement;
+
+    type PrepaintState = ();
+
+    fn id(&self) -> Option<ElementId> {
+        None
+    }
+
+    fn request_layout(
+        &mut self,
+        _id: Option<&GlobalElementId>,
+        window: &mut Window,
+        cx: &mut AppContext,
+    ) -> (LayoutId, Self::RequestLayoutState) {
+        let mut element = (self)(window, cx);
+        let layout_id = element.request_layout(window, cx);
+        (layout_id, element)
+    }
+
+    fn prepaint(
+        &mut self,
+        _id: Option<&GlobalElementId>,
+        _bounds: Bounds<Pixels>,
+        element: &mut Self::RequestLayoutState,
+        window: &mut Window,
+        cx: &mut AppContext,
+    ) -> Self::PrepaintState {
+        element.prepaint(window, cx);
+    }
+
+    fn paint(
+        &mut self,
+        _id: Option<&GlobalElementId>,
+        _bounds: Bounds<Pixels>,
+        element: &mut Self::RequestLayoutState,
+        _: &mut Self::PrepaintState,
+        window: &mut Window,
+        cx: &mut AppContext,
+    ) {
+        element.paint(window, cx);
+    }
+}
+
+impl IntoElement for AnyView {
+    type Element = Self;
+
+    fn into_element(self) -> Self::Element {
+        self
+    }
+}
+
 impl<T: Render> IntoElement for Model<T> {
     type Element = Self;
 

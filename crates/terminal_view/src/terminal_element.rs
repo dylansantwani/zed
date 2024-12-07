@@ -888,7 +888,7 @@ impl Element for TerminalElement {
         window: &mut Window,
         cx: &mut AppContext,
     ) {
-        cx.with_content_mask(Some(ContentMask { bounds }), |cx| {
+        window.with_content_mask(Some(ContentMask { bounds }), |window| {
             let scroll_top = self.terminal_view.read(cx).scroll_top;
 
             cx.paint_quad(fill(bounds, layout.background_color));
@@ -904,7 +904,7 @@ impl Element for TerminalElement {
                 workspace: self.workspace.clone(),
             };
 
-            self.register_mouse_listeners(origin, layout.mode, &layout.hitbox, window, window, cx);
+            self.register_mouse_listeners(origin, layout.mode, &layout.hitbox, window, cx);
             if self.can_navigate_to_selected_word && layout.last_hovered_word.is_some() {
                 cx.set_cursor_style(gpui::CursorStyle::PointingHand, &layout.hitbox);
             } else {
@@ -914,8 +914,13 @@ impl Element for TerminalElement {
             let cursor = layout.cursor.take();
             let hyperlink_tooltip = layout.hyperlink_tooltip.take();
             let block_below_cursor_element = layout.block_below_cursor_element.take();
-            self.interactivity
-                .paint(global_id, bounds, Some(&layout.hitbox), cx, |_, cx| {
+            self.interactivity.paint(
+                global_id,
+                bounds,
+                Some(&layout.hitbox),
+                window,
+                cx,
+                |_, window, cx| {
                     cx.handle_input(&self.focus, terminal_input_handler);
 
                     cx.on_key_event({
@@ -970,9 +975,10 @@ impl Element for TerminalElement {
                     }
 
                     if let Some(mut element) = hyperlink_tooltip {
-                        element.paint(window, window, cx);
+                        element.paint(window, cx);
                     }
-                });
+                },
+            );
         });
     }
 }

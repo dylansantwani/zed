@@ -28,7 +28,7 @@ pub fn init(cx: &mut AppContext) {
 pub fn toggle(workspace: &mut Workspace, toggle: &Toggle, cx: &mut ModelContext<Workspace>) {
     let fs = workspace.app_state().fs.clone();
     let telemetry = workspace.client().telemetry().clone();
-    workspace.toggle_modal(cx, |cx| {
+    workspace.toggle_modal(window, cx, |window, cx| {
         let delegate = ThemeSelectorDelegate::new(
             cx.handle().downgrade(),
             fs,

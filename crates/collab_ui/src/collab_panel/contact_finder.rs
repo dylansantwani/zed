@@ -26,9 +26,9 @@ impl ContactFinder {
         Self { picker }
     }
 
-    pub fn set_query(&mut self, query: String, cx: &mut ModelContext<Self>) {
-        self.picker.update(cx, |picker, cx| {
-            picker.set_query(query, cx);
+    pub fn set_query(&mut self, query: String, window: &mut Window, cx: &mut ModelContext<Self>) {
+        self.picker.update(window, cx, |picker, cx| {
+            picker.set_query(query, window, cx);
         });
     }
 }

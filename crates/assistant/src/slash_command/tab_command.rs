@@ -83,7 +83,7 @@ impl SlashCommand for TabSlashCommand {
         });
         let current_query = arguments.last().cloned().unwrap_or_default();
         let tab_items_search =
-            tab_items_for_queries(workspace, &[current_query], cancel, false, cx);
+            tab_items_for_queries(workspace, &[current_query], cancel, false, window, cx);
 
         let comment_id = cx.theme().syntax().highlight_id("comment").map(HighlightId);
         cx.spawn(|_| async move {

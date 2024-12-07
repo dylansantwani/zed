@@ -19,8 +19,8 @@ use gpui::{
     AppContext, AsyncWindowContext, ClickEvent, ClipboardItem, Div, DragMoveEvent, EntityId,
     EventEmitter, ExternalPaths, FocusHandle, FocusOutEvent, FocusableView, KeyContext, Model,
     ModelContext, MouseButton, MouseDownEvent, NavigationDirection, Pixels, Point, PromptLevel,
-    Render, ScrollHandle, Subscription, Task, View, VisualContext, WeakFocusHandle, WeakView,
-    WindowContext,
+    Render, ScrollHandle, Subscription, Task, View, VisualContext, WeakFocusHandle, WeakModel,
+    WeakView, WindowContext,
 };
 use itertools::Itertools;
 use parking_lot::Mutex;
@@ -372,14 +372,15 @@ impl Pane {
         next_timestamp: Arc<AtomicUsize>,
         can_drop_predicate: Option<Arc<dyn Fn(&dyn Any, &mut WindowContext) -> bool + 'static>>,
         double_click_dispatch_action: Box<dyn Action>,
+        window: &mut Window,
         cx: &mut ModelContext<Self>,
     ) -> Self {
         let focus_handle = window.focus_handle();
 
         let subscriptions = vec![
-            window.on_focus(&focus_handle, Pane::focuswindown),
-            cx.on_focus_in(&focus_handle, Pane::focus_in),
-            cx.on_focus_out(&focus_handle, Pane::focus_out),
+            window.on_focus(&focus_handle, cx, Pane::focus),
+            window.on_focus_in(&focus_handle, Pane::focus_in),
+            window.on_focus_out(&focus_handle, Pane::focus_out),
             cx.observe_global::<SettingsStore>(Self::settings_changed),
         ];
 
@@ -552,7 +553,7 @@ impl Pane {
                 .map_or(false, |item| item.focus_handle(cx).contains_focused(cx))
     }
 
-    fn focus_in(&mut self, cx: &mut ModelContext<Self>) {
+    fn focus_in(&mut self, window: &mut Window, cx: &mut ModelContext<Self>) {
         if !self.was_focused {
             self.was_focused = true;
             cx.emit(Event::Focus);
@@ -564,7 +565,7 @@ impl Pane {
         });
 
         if let Some(active_item) = self.active_item() {
-            if self.focus_handle.is_focused(cx) {
+            if self.focus_handle.is_focused(window) {
                 // Pane was focused directly. We need to either focus a view inside the active item,
                 // or focus the active item itself
                 if let Some(weak_last_focus_handle) =
@@ -587,8 +588,8 @@ impl Pane {
     }
 
     pub fn context_menu_focused(&self, cx: &mut ModelContext<Self>) -> bool {
-        self.new_item_context_menu_handle.is_focused(window, cx)
-            || self.split_item_context_menu_handle.is_focused(cx)
+        self.new_item_context_menu_handle.is_focused(window)
+            || self.split_item_context_menu_handle.is_focused(window)
     }
 
     fn focus_out(&mut self, _event: FocusOutEvent, cx: &mut ModelContext<Self>) {
@@ -1115,7 +1116,7 @@ impl Pane {
                 .when_closing_with_no_tabs
                 .should_close()
             {
-                cx.dispatch_action(Box::new(CloseWindow));
+                window.dispatch_action(Box::new(CloseWindow), cx);
             }
 
             return None;
@@ -1734,7 +1735,7 @@ impl Pane {
         }
     }
 
-    pub fn focus(&mut self, window: &mut Window) {
+    pub fn focus(&mut self, window: &mut Window, cx: &mut AppContext) {
         window.focus(&self.focus_handle);
     }
 
@@ -2239,7 +2240,7 @@ impl Pane {
                                     "Open in Terminal",
                                     Some(Box::new(OpenInTerminal)),
                                     cx.handler_for(&pane, move |_, cx| {
-                                        cx.dispatch_action(
+                                        window.dispatch_action(
                                             OpenTerminal {
                                                 working_directory: parent_abs_path.clone(),
                                             }
@@ -2357,7 +2358,7 @@ impl Pane {
                             }))
                             .on_click(cx.listener(move |this, event: &ClickEvent, cx| {
                                 if event.up.click_count == 2 {
-                                    cx.dispatch_action(
+                                    window.dispatch_action(
                                         this.double_click_dispatch_action.boxed_clone(),
                                     )
                                 }
@@ -3197,7 +3198,8 @@ mod tests {
         let fs = FakeFs::new(cx.executor());
 
         let project = Project::test(fs, None, cx).await;
-        let (workspace, cx) = cx.add_window_view(|cx| Workspace::test_new(project.clone(), cx));
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), cx));
         let pane = workspace.update(cx, |workspace, _| workspace.active_pane().clone());
 
         pane.update(cx, |pane, cx| {
@@ -3213,7 +3215,8 @@ mod tests {
         let fs = FakeFs::new(cx.executor());
 
         let project = Project::test(fs, None, cx).await;
-        let (workspace, cx) = cx.add_window_view(|cx| Workspace::test_new(project.clone(), cx));
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), cx));
         let pane = workspace.update(cx, |workspace, _| workspace.active_pane().clone());
 
         // 1. Add with a destination index
@@ -3290,7 +3293,8 @@ mod tests {
         let fs = FakeFs::new(cx.executor());
 
         let project = Project::test(fs, None, cx).await;
-        let (workspace, cx) = cx.add_window_view(|cx| Workspace::test_new(project.clone(), cx));
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), cx));
         let pane = workspace.update(cx, |workspace, _| workspace.active_pane().clone());
 
         // 1. Add with a destination index
@@ -3365,7 +3369,8 @@ mod tests {
         let fs = FakeFs::new(cx.executor());
 
         let project = Project::test(fs, None, cx).await;
-        let (workspace, cx) = cx.add_window_view(|cx| Workspace::test_new(project.clone(), cx));
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), cx));
         let pane = workspace.update(cx, |workspace, _| workspace.active_pane().clone());
 
         // singleton view
@@ -3464,7 +3469,8 @@ mod tests {
         let fs = FakeFs::new(cx.executor());
 
         let project = Project::test(fs, None, cx).await;
-        let (workspace, cx) = cx.add_window_view(|cx| Workspace::test_new(project.clone(), cx));
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), cx));
         let pane = workspace.update(cx, |workspace, _| workspace.active_pane().clone());
 
         add_labeled_item(&pane, "A", false, cx);
@@ -3524,7 +3530,8 @@ mod tests {
         let fs = FakeFs::new(cx.executor());
 
         let project = Project::test(fs, None, cx).await;
-        let (workspace, cx) = cx.add_window_view(|cx| Workspace::test_new(project.clone(), cx));
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), cx));
         let pane = workspace.update(cx, |workspace, _| workspace.active_pane().clone());
 
         add_labeled_item(&pane, "A", false, cx);
@@ -3579,7 +3586,8 @@ mod tests {
         let fs = FakeFs::new(cx.executor());
 
         let project = Project::test(fs, None, cx).await;
-        let (workspace, cx) = cx.add_window_view(|cx| Workspace::test_new(project.clone(), cx));
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), cx));
         let pane = workspace.update(cx, |workspace, _| workspace.active_pane().clone());
 
         set_labeled_items(&pane, ["A", "B", "C*", "D", "E"], cx);
@@ -3605,7 +3613,8 @@ mod tests {
         let fs = FakeFs::new(cx.executor());
 
         let project = Project::test(fs, None, cx).await;
-        let (workspace, cx) = cx.add_window_view(|cx| Workspace::test_new(project.clone(), cx));
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), cx));
         let pane = workspace.update(cx, |workspace, _| workspace.active_pane().clone());
 
         add_labeled_item(&pane, "A", true, cx);
@@ -3635,7 +3644,8 @@ mod tests {
         let fs = FakeFs::new(cx.executor());
 
         let project = Project::test(fs, None, cx).await;
-        let (workspace, cx) = cx.add_window_view(|cx| Workspace::test_new(project.clone(), cx));
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), cx));
         let pane = workspace.update(cx, |workspace, _| workspace.active_pane().clone());
 
         set_labeled_items(&pane, ["A", "B", "C*", "D", "E"], cx);
@@ -3660,7 +3670,8 @@ mod tests {
         let fs = FakeFs::new(cx.executor());
 
         let project = Project::test(fs, None, cx).await;
-        let (workspace, cx) = cx.add_window_view(|cx| Workspace::test_new(project.clone(), cx));
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), cx));
         let pane = workspace.update(cx, |workspace, _| workspace.active_pane().clone());
 
         set_labeled_items(&pane, ["A", "B", "C*", "D", "E"], cx);
@@ -3685,7 +3696,8 @@ mod tests {
         let fs = FakeFs::new(cx.executor());
 
         let project = Project::test(fs, None, cx).await;
-        let (workspace, cx) = cx.add_window_view(|cx| Workspace::test_new(project.clone(), cx));
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), cx));
         let pane = workspace.update(cx, |workspace, _| workspace.active_pane().clone());
 
         let item_a = add_labeled_item(&pane, "A", false, cx);
@@ -3755,7 +3767,8 @@ mod tests {
         let fs = FakeFs::new(cx.executor());
 
         let project = Project::test(fs, None, cx).await;
-        let (workspace, cx) = cx.add_window_view(|cx| Workspace::test_new(project.clone(), cx));
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), cx));
         let pane = workspace.update(cx, |workspace, _| workspace.active_pane().clone());
 
         let item_a = add_labeled_item(&pane, "A", false, cx);

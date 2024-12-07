@@ -73,7 +73,7 @@ impl OutlineView {
             editor
                 .register_action(move |action, cx| {
                     if let Some(editor) = handle.upgrade() {
-                        toggle(editor, action, cx);
+                        toggle(editor, action, window, cx);
                     }
                 })
                 .detach();
@@ -187,7 +187,7 @@ impl PickerDelegate for OutlineViewDelegate {
     ) -> Task<()> {
         let selected_index;
         if query.is_empty() {
-            self.restore_active_editor(cx);
+            self.restore_active_editor(window, cx);
             self.matches = self
                 .outline
                 .items
@@ -268,7 +268,7 @@ impl PickerDelegate for OutlineViewDelegate {
         self.outline_view
             .update(cx, |_, cx| cx.emit(DismissEvent))
             .log_err();
-        self.restore_active_editor(cx);
+        self.restore_active_editor(window, cx);
     }
 
     fn render_match(
@@ -363,7 +363,8 @@ mod tests {
         let project = Project::test(fs, ["/dir".as_ref()], cx).await;
         project.read_with(cx, |project, _| project.languages().add(rust_lang()));
 
-        let (workspace, cx) = cx.add_window_view(|cx| Workspace::test_new(project.clone(), cx));
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), cx));
         let worktree_id = workspace.update(cx, |workspace, cx| {
             workspace.project().update(cx, |project, cx| {
                 project.worktrees(cx).next().unwrap().read(cx).id()
@@ -375,7 +376,7 @@ mod tests {
             .unwrap();
         let editor = workspace
             .update(cx, |workspace, cx| {
-                workspace.open_path((worktree_id, "a.rs"), None, true, cx)
+                workspace.open_path((worktree_id, "a.rs"), None, true, window, cx)
             })
             .await
             .unwrap()

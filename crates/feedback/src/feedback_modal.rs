@@ -8,7 +8,7 @@ use editor::{Editor, EditorEvent};
 use futures::AsyncReadExt;
 use gpui::{
     div, rems, AppContext, DismissEvent, EventEmitter, FocusHandle, FocusableView, Model,
-    PromptLevel, Render, Task, View, ModelContext,
+    ModelContext, PromptLevel, Render, Task, View,
 };
 use http_client::HttpClient;
 use language::Buffer;
@@ -137,7 +137,7 @@ impl FeedbackModal {
                         let system_specs = system_specs.await;
 
                         workspace.update(&mut cx, |workspace, cx| {
-                            workspace.toggle_modal(cx, move |cx| {
+                            workspace.toggle_modal(window, cx, move |cx| {
                                 FeedbackModal::new(system_specs, project, buffer, cx)
                             });
                         })?;

@@ -15,8 +15,8 @@ use extension_host::{ExtensionManifest, ExtensionOperation, ExtensionStore};
 use fuzzy::{match_strings, StringMatchCandidate};
 use gpui::{
     actions, uniform_list, Action, AppContext, EventEmitter, Flatten, FocusableView,
-    InteractiveElement, KeyContext, ParentElement, Render, Styled, Task, TextStyle,
-    UniformListScrollHandle, View, ModelContext, VisualContext, WeakView, WindowContext,
+    InteractiveElement, KeyContext, ModelContext, ParentElement, Render, Styled, Task, TextStyle,
+    UniformListScrollHandle, View, VisualContext, WeakView, WindowContext,
 };
 use num_format::{Locale, ToFormattedString};
 use project::DirectoryLister;
@@ -40,7 +40,7 @@ actions!(zed, [InstallDevExtension]);
 pub fn init(cx: &mut AppContext) {
     cx.observe_new_models(move |workspace: &mut Workspace, cx| {
         workspace
-            .ModelContext<Self>move |workspace, _: &zed_actions::Extensions, cx| {
+            .register_action(move |workspace, _: &zed_actions::Extensions, cx| {
                 let existing = workspace
                     .active_pane()
                     .read(cx)
@@ -48,10 +48,16 @@ pub fn init(cx: &mut AppContext) {
                     .find_map(|item| item.downcast::<ExtensionsPage>());
 
                 if let Some(existing) = existing {
-                    workspace.activate_item(&existing, true, true, cx);
+                    workspace.activate_item(&existing, true, true, window, cx);
                 } else {
                     let extensions_page = ExtensionsPage::new(workspace, cx);
-                    workspace.add_item_to_active_pane(Box::new(extensions_page), None, true, cx)
+                    workspace.add_item_to_active_pane(
+                        Box::new(extensions_page),
+                        None,
+                        true,
+                        window,
+                        cx,
+                    )
                 }
             })
             .register_action(move |workspace, _: &InstallDevExtension, cx| {
@@ -424,7 +430,7 @@ impl ExtensionsPage {
                                 )
                                 .on_click({
                                     let extension_id = extension.id.clone();
-                                    move |_, cx| {
+                                    move |_, _window, cx| {
                                         ExtensionStore::global(cx).update(cx, |store, cx| {
                                             store.rebuild_dev_extension(extension_id.clone(), cx)
                                         });
@@ -437,7 +443,7 @@ impl ExtensionsPage {
                                 Button::new(SharedString::from(extension.id.clone()), "Uninstall")
                                     .on_click({
                                         let extension_id = extension.id.clone();
-                                        move |_, cx| {
+                                        move |_, _window, cx| {
                                             ExtensionStore::global(cx).update(cx, |store, cx| {
                                                 store.uninstall_extension(extension_id.clone(), cx)
                                             });
@@ -623,6 +629,7 @@ impl ExtensionsPage {
                                     Some(Self::render_remote_extension_context_menu(
                                         &this,
                                         extension_id.clone(),
+                                        window,
                                         cx,
                                     ))
                                 }),
@@ -634,7 +641,8 @@ impl ExtensionsPage {
     fn render_remote_extension_context_menu(
         this: &Model<Self>,
         extension_id: Arc<str>,
-        window: &mut Window, cx: &mut AppContext,
+        window: &mut Window,
+        cx: &mut AppContext,
     ) -> Model<ContextMenu> {
         let context_menu = ContextMenu::build(window, cx, |context_menu, window, cx| {
             context_menu.entry(
@@ -667,7 +675,7 @@ impl ExtensionsPage {
 
             workspace.update(&mut cx, |workspace, cx| {
                 let fs = workspace.project().read(cx).fs().clone();
-                workspace.toggle_modal(cx, |cx| {
+                workspace.toggle_modal(window, cx, |window, cx| {
                     let delegate = ExtensionVersionSelectorDelegate::new(
                         fs,
                         cx.handle().downgrade(),
@@ -707,7 +715,7 @@ impl ExtensionsPage {
                 Button::new(SharedString::from(extension.id.clone()), "Install").on_click(
                     cx.listener({
                         let extension_id = extension.id.clone();
-                        move |this, _, cx| {
+                        move |this, _, _window, cx| {
                             this.telemetry
                                 .report_app_event("extensions: install extension".to_string());
                             ExtensionStore::global(cx).update(cx, |store, cx| {
@@ -732,7 +740,7 @@ impl ExtensionsPage {
                 Button::new(SharedString::from(extension.id.clone()), "Uninstall").on_click(
                     cx.listener({
                         let extension_id = extension.id.clone();
-                        move |this, _, cx| {
+                        move |this, _, _window, cx| {
                             this.telemetry
                                 .report_app_event("extensions: uninstall extension".to_string());
                             ExtensionStore::global(cx).update(cx, |store, cx| {
@@ -763,7 +771,7 @@ impl ExtensionsPage {
                             .on_click(cx.listener({
                                 let extension_id = extension.id.clone();
                                 let version = extension.manifest.version.clone();
-                                move |this, _, cx| {
+                                move |this, _, _window, cx| {
                                     this.telemetry.report_app_event(
                                         "extensions: install extension".to_string(),
                                     );
@@ -813,7 +821,11 @@ impl ExtensionsPage {
         )
     }
 
-    fn render_text_input(&self, editor: &Model<Editor>, cx: &ModelContext<Self>) -> impl IntoElement {
+    fn render_text_input(
+        &self,
+        editor: &Model<Editor>,
+        cx: &ModelContext<Self>,
+    ) -> impl IntoElement {
         let settings = ThemeSettings::get_global(cx);
         let text_style = TextStyle {
             color: if editor.read(cx).read_only(cx) {

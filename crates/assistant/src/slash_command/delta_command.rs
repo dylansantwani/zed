@@ -54,7 +54,8 @@ impl SlashCommand for DeltaSlashCommand {
         context_buffer: BufferSnapshot,
         workspace: WeakModel<Workspace>,
         delegate: Option<Arc<dyn LspAdapterDelegate>>,
-        window: &mut Window, cx: &mut AppContext,
+        window: &mut Window,
+        cx: &mut AppContext,
     ) -> Task<SlashCommandResult> {
         let mut paths = HashSet::default();
         let mut file_command_old_outputs = Vec::new();
@@ -78,6 +79,7 @@ impl SlashCommand for DeltaSlashCommand {
                         context_buffer.clone(),
                         workspace.clone(),
                         delegate.clone(),
+                        window,
                         cx,
                     ));
                 }

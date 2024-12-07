@@ -1,7 +1,7 @@
+use gpui::ModelContext;
 use project::TaskSourceKind;
 use remote::ConnectionState;
 use task::{ResolvedTask, TaskContext, TaskTemplate};
-use ui::ModelContext;
 
 use crate::Workspace;
 

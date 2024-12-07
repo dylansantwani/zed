@@ -36,12 +36,12 @@ impl BranchList {
             let delegate = BranchListDelegate::new(this.clone(), 70, &cx).await?;
 
             this.update(&mut cx, |workspace, cx| {
-                workspace.toggle_modal(cx, |cx| BranchList::new(delegate, 34., cx))
+                workspace.toggle_modal(window, cx, |cx| BranchList::new(delegate, 34., cx))
             })?;
 
             Ok(())
         })
-        .detach_and_prompt_err("Failed to read branches", cx, |_, _| None)
+        .detach_and_prompt_err("Failed to read branches", window, cx, |_, _, _| None)
     }
 
     fn new(delegate: BranchListDelegate, rem_width: f32, cx: &mut ModelContext<Self>) -> Self {
@@ -263,7 +263,7 @@ impl PickerDelegate for BranchListDelegate {
                 })
             }
         })
-        .detach_and_prompt_err("Failed to change branch", cx, |_, _| None);
+        .detach_and_prompt_err("Failed to change branch", window, cx, |_, _, _| None);
     }
 
     fn dismissed(&mut self, cx: &mut ModelContext<Picker<Self>>) {

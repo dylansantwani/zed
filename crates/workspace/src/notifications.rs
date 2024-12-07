@@ -1,9 +1,8 @@
 use crate::{Toast, Workspace};
 use collections::HashMap;
 use gpui::{
-    svg, AnyView, AppContext, AsyncWindowContext, ClipboardItem, DismissEvent, Entity, EntityId,
-    EventEmitter, Global, ModelContext, PromptLevel, Render, ScrollHandle, Task, VisualContext,
-    WindowContext,
+    svg, AnyView, AppContext, ClipboardItem, DismissEvent, Entity, EntityId, EventEmitter, Global,
+    Model, ModelContext, PromptLevel, Render, ScrollHandle, Task, WindowContext,
 };
 use language::DiagnosticSeverity;
 
@@ -545,7 +544,7 @@ pub mod simple_message_notification {
                         .children(self.secondary_click_message.iter().map(|message| {
                             Button::new(message.clone(), message.clone())
                                 .style(ButtonStyle::Filled)
-                                .on_click(cx.listener(|this, _, cx| {
+                                .on_click(cx.listener(|this, _, _window, cx| {
                                     if let Some(on_click) = this.secondary_on_click.as_ref() {
                                         (on_click)(cx)
                                     };
@@ -654,7 +653,7 @@ where
                 log::error!("{err:?}");
                 if let Ok(prompt) = cx.update(|cx| {
                     let detail = f(err, cx).unwrap_or_else(|| format!("{err}. Please try again."));
-                    cx.prompt(PromptLevel::Critical, &msg, Some(&detail), &["Ok"])
+                    window.prompt(PromptLevel::Critical, &msg, Some(&detail), &["Ok"], cx)
                 }) {
                     prompt.await.ok();
                 }
@@ -671,6 +670,6 @@ where
         cx: &mut AppContext,
         f: impl FnOnce(&anyhow::Error, &mut WindowContext) -> Option<String> + 'static,
     ) {
-        self.prompt_err(msg, cx, f).detach();
+        self.prompt_err(msg, window, cx, f).detach();
     }
 }

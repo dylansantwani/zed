@@ -42,6 +42,15 @@ impl<'a, T: 'static> ModelContext<'a, T> {
         self.model_state.clone()
     }
 
+    /// Schedules the given function to be run at the end of the current effect cycle, allowing entities
+    /// that are currently on the stack to be returned to the app.
+    pub fn defer(&mut self, f: impl 'static + FnOnce(&mut T, &mut ModelContext<T>)) {
+        let model = self.handle().downgrade();
+        self.app.defer(move |cx| {
+            model.update(cx, f).ok();
+        });
+    }
+
     /// Arranges for the given function to be called whenever [`ModelContext::notify`] or
     /// [`ModelContext::notify`](crate::ModelContext::notify) is called with the given model or view.
     pub fn observe<W, E>(
@@ -146,7 +155,7 @@ impl<'a, T: 'static> ModelContext<'a, T> {
             TypeId::of::<G>(),
             Box::new(move |cx| handle.update(cx, |view, cx| f(view, cx)).is_ok()),
         );
-        self.defer(move |_| activate());
+        self.defer(move |_, _| activate());
         subscription
     }
 

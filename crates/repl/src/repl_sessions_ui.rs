@@ -38,10 +38,16 @@ pub fn init(cx: &mut AppContext) {
                     .find_map(|item| item.downcast::<ReplSessionsPage>());
 
                 if let Some(existing) = existing {
-                    workspace.activate_item(&existing, true, true, cx);
+                    workspace.activate_item(&existing, true, true, window, cx);
                 } else {
                     let repl_sessions_page = ReplSessionsPage::new(cx);
-                    workspace.add_item_to_active_pane(Box::new(repl_sessions_page), None, true, cx)
+                    workspace.add_item_to_active_pane(
+                        Box::new(repl_sessions_page),
+                        None,
+                        true,
+                        window,
+                        cx,
+                    )
                 }
             });
 
@@ -61,7 +67,7 @@ pub fn init(cx: &mut AppContext) {
         }
 
         cx.defer(|editor, cx| {
-            let workspace = Workspace::for_window(cx);
+            let workspace = Workspace::for_window(window, cx);
             let project = workspace.map(|workspace| workspace.read(cx).project().clone());
 
             let is_local_project = project

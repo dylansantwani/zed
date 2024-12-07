@@ -92,7 +92,7 @@ pub fn init(cx: &mut AppContext) {
     cx.observe_new_models(|editor: &mut Editor, cx| Vim::register(editor, cx))
         .detach();
 
-    cx.observe_new_views(|workspace: &mut Workspace, _| {
+    cx.observe_new_models(|workspace: &mut Workspace, _| {
         workspace.register_action(|workspace, _: &ToggleVimMode, cx| {
             let fs = workspace.app_state().fs.clone();
             let currently_enabled = Vim::enabled(cx);

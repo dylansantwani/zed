@@ -7,7 +7,7 @@ use settings::Settings;
 use ui::{
     div, h_flex, rems, Button, ButtonCommon, ButtonStyle, Clickable, ElevationIndex, FluentBuilder,
     Headline, HeadlineSize, IconName, IconPosition, InteractiveElement, IntoElement, Label, Modal,
-    ModalFooter, ModalHeader, ParentElement, Section, Styled, StyledExt, ModelContext,
+    ModalFooter, ModalHeader, ModelContext, ParentElement, Section, Styled, StyledExt,
 };
 use workspace::{notifications::DetachAndPromptErr, ModalView, OpenOptions, Workspace};
 
@@ -115,7 +115,7 @@ impl DisconnectedOverlay {
             .await?;
             Ok(())
         })
-        .detach_and_prompt_err("Failed to reconnect", cx, |_, _| None);
+        .detach_and_prompt_err("Failed to reconnect", window, cx, |_, _, _| None);
     }
 
     fn cancel(&mut self, _: &menu::Cancel, cx: &mut ModelContext<Self>) {

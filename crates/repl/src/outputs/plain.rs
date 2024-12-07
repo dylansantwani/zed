@@ -89,7 +89,7 @@ pub fn text_style(window: &mut Window, cx: &mut AppContext) -> TextStyle {
 
 /// Returns the default terminal size for the terminal output.
 pub fn terminal_size(window: &mut Window, cx: &mut AppContext) -> terminal::TerminalSize {
-    let text_style = text_style(cx);
+    let text_style = text_style(window, cx);
     let text_system = cx.text_system();
 
     let line_height = cx.line_height();
@@ -126,7 +126,7 @@ impl TerminalOutput {
         let (events_tx, events_rx) = futures::channel::mpsc::unbounded();
         let term = alacritty_terminal::Term::new(
             Config::default(),
-            &terminal_size(cx),
+            &terminal_size(window, cx),
             terminal::ZedListener(events_tx.clone()),
         );
 
@@ -151,8 +151,8 @@ impl TerminalOutput {
     ///
     /// A new instance of `TerminalOutput` containing the provided text.
     pub fn from(text: &str, window: &mut Window, cx: &mut AppContext) -> Self {
-        let mut output = Self::new(cx);
-        output.append_text(text, cx);
+        let mut output = Self::new(window, cx);
+        output.append_text(text, window, cx);
         output
     }
 
@@ -247,7 +247,7 @@ impl Render for TerminalOutput {
     /// the layout of the terminal grid, calculates the dimensions of the output, and
     /// creates a canvas element that paints the terminal cells and background rectangles.
     fn render(&mut self, cx: &mut ModelContext<Self>) -> impl IntoElement {
-        let text_style = text_style(cx);
+        let text_style = text_style(window, cx);
         let text_system = cx.text_system();
 
         let grid = self
@@ -286,6 +286,7 @@ impl Render for TerminalOutput {
                             line_height: text_line_height,
                             size: bounds.size,
                         },
+                        window,
                         cx,
                     );
                 }
@@ -299,6 +300,7 @@ impl Render for TerminalOutput {
                             size: bounds.size,
                         },
                         bounds,
+                        window,
                         cx,
                     );
                 }

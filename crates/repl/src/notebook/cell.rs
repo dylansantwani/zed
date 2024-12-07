@@ -80,23 +80,28 @@ pub enum Cell {
     Raw(Model<RawCell>),
 }
 
-fn convert_outputs(outputs: &Vec<nbformat::v4::Output>, window: &mut Window, cx: &mut AppContext) -> Vec<Output> {
+fn convert_outputs(
+    outputs: &Vec<nbformat::v4::Output>,
+    window: &mut Window,
+    cx: &mut AppContext,
+) -> Vec<Output> {
     outputs
         .into_iter()
         .map(|output| match output {
             nbformat::v4::Output::Stream { text, .. } => Output::Stream {
-                content: cx.new_model(|cx| TerminalOutput::from(&text.0, cx)),
+                content: cx.new_model(|cx| TerminalOutput::from(&text.0, window, cx)),
             },
             nbformat::v4::Output::DisplayData(display_data) => {
-                Output::new(&display_data.data, None, cx)
+                Output::new(&display_data.data, None, window, cx)
             }
             nbformat::v4::Output::ExecuteResult(execute_result) => {
-                Output::new(&execute_result.data, None, cx)
+                Output::new(&execute_result.data, None, window, cx)
             }
             nbformat::v4::Output::Error(error) => Output::ErrorOutput(ErrorView {
                 ename: error.ename.clone(),
                 evalue: error.evalue.clone(),
-                traceback: cx.new_model(|cx| TerminalOutput::from(&error.traceback.join("\n"), cx)),
+                traceback: cx
+                    .new_model(|cx| TerminalOutput::from(&error.traceback.join("\n"), window, cx)),
             }),
         })
         .collect()
@@ -107,7 +112,8 @@ impl Cell {
         cell: &nbformat::v4::Cell,
         languages: &Arc<LanguageRegistry>,
         notebook_language: Shared<Task<Option<Arc<Language>>>>,
-        window: &mut Window, cx: &mut AppContext,
+        window: &mut Window,
+        cx: &mut AppContext,
     ) -> Self {
         match cell {
             nbformat::v4::Cell::Markdown {
@@ -206,7 +212,7 @@ impl Cell {
                     execution_count: *execution_count,
                     source: source.join(""),
                     editor: editor_view,
-                    outputs: convert_outputs(outputs, cx),
+                    outputs: convert_outputs(outputs, window, cx),
                     selected: false,
                     language_task,
                     cell_position: None,
@@ -627,7 +633,7 @@ impl Render for CodeCell {
                                                 Some(content.clone().into_any_element())
                                             }
                                             Output::ErrorOutput(error_view) => {
-                                                error_view.render(cx)
+                                                error_view.render(window, cx)
                                             }
                                             Output::ClearOutputWaitMarker => None,
                                         };

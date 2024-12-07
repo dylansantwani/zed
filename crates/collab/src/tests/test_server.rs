@@ -819,7 +819,7 @@ impl TestClient {
         project: &Model<Project>,
         cx: &'a mut TestAppContext,
     ) -> (Model<Workspace>, &'a mut VisualTestContext) {
-        cx.add_window_view(|cx| {
+        cx.add_window_view(|window, cx| {
             cx.activate_window();
             Workspace::new(None, project.clone(), self.app_state.clone(), cx)
         })
@@ -830,7 +830,7 @@ impl TestClient {
         cx: &'a mut TestAppContext,
     ) -> (Model<Workspace>, &'a mut VisualTestContext) {
         let project = self.build_test_project(cx).await;
-        cx.add_window_view(|cx| {
+        cx.add_window_view(|window, cx| {
             cx.activate_window();
             Workspace::new(None, project.clone(), self.app_state.clone(), cx)
         })
@@ -856,7 +856,7 @@ pub fn open_channel_notes(
     let window = cx.update(|cx| cx.active_window().unwrap().downcast::<Workspace>().unwrap());
     let view = window.root_view(cx).unwrap();
 
-    cx.update(|cx| ChannelView::open(channel_id, None, view.clone(), cx))
+    cx.update(|cx| ChannelView::open(channel_id, None, view.clone(), window, cx))
 }
 
 impl Drop for TestClient {

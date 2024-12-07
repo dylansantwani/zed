@@ -215,11 +215,11 @@ pub fn initialize_workspace(
         workspace.status_bar().update(cx, |status_bar, cx| {
             status_bar.add_left_item(diagnostic_summary, cx);
             status_bar.add_left_item(activity_indicator, cx);
-            status_bar.add_right_item(inline_completion_button, cx);
-            status_bar.add_right_item(active_buffer_language, cx);
-                        status_bar.add_right_item(active_toolchain_language, cx);
-            status_bar.add_right_item(vim_mode_indicator, cx);
-            status_bar.add_right_item(cursor_position, cx);
+            status_bar.add_right_item(inline_completion_button, window, cx);
+            status_bar.add_right_item(active_buffer_language, window, cx);
+                        status_bar.add_right_item(active_toolchain_language, window, cx);
+                        status_bar.add_right_item(vim_mode_indicator, window, cx);
+                        status_bar.add_right_item(cursor_position, window, cx);
         });
 
         auto_update_ui::notify_of_any_new_update(cx);
@@ -417,7 +417,7 @@ pub fn initialize_workspace(
                     register_zed_scheme(&cx).await.log_err();
                     Ok(())
                 })
-                .detach_and_prompt_err("Error installing zed cli", cx, |_, _| None);
+                .detach_and_prompt_err("Error installing zed cli", window, cx, |_, _, _| None);
             })
             .register_action(|_, _: &install_cli::RegisterZedScheme, cx| {
                 cx.spawn(|workspace, mut cx| async move {
@@ -441,7 +441,8 @@ pub fn initialize_workspace(
                 .detach_and_prompt_err(
                     "Error registering zed:// scheme",
                     cx,
-                    |_, _| None,
+                    window,
+                    |_, _, _| None,
                 );
             })
             .register_action(|workspace, _: &OpenLog, cx| {
@@ -525,28 +526,28 @@ pub fn initialize_workspace(
                 |workspace: &mut Workspace,
                  _: &project_panel::ToggleFocus,
                  cx: &mut ModelContext<Workspace>| {
-                    workspace.toggle_panel_focus::<ProjectPanel>(cx);
+                    workspace.toggle_panel_focus::<ProjectPanel>(window, cx);
                 },
             )
             .register_action(
                 |workspace: &mut Workspace,
                  _: &outline_panel::ToggleFocus,
                  cx: &mut ModelContext<Workspace>| {
-                    workspace.toggle_panel_focus::<OutlinePanel>(cx);
+                    workspace.toggle_panel_focus::<OutlinePanel>(window, cx);
                 },
             )
             .register_action(
                 |workspace: &mut Workspace,
                  _: &collab_ui::collab_panel::ToggleFocus,
                  cx: &mut ModelContext<Workspace>| {
-                    workspace.toggle_panel_focus::<collab_ui::collab_panel::CollabPanel>(cx);
+                    workspace.toggle_panel_focus::<collab_ui::collab_panel::CollabPanel>(window, cx);
                 },
             )
             .register_action(
                 |workspace: &mut Workspace,
                  _: &collab_ui::chat_panel::ToggleFocus,
                  cx: &mut ModelContext<Workspace>| {
-                    workspace.toggle_panel_focus::<collab_ui::chat_panel::ChatPanel>(cx);
+                    workspace.toggle_panel_focus::<collab_ui::chat_panel::ChatPanel>(window, cx);
                 },
             )
             .register_action(
@@ -554,14 +555,14 @@ pub fn initialize_workspace(
                  _: &collab_ui::notification_panel::ToggleFocus,
                  cx: &mut ModelContext<Workspace>| {
                     workspace
-                        .toggle_panel_focus::<collab_ui::notification_panel::NotificationPanel>(cx);
+                        .toggle_panel_focus::<collab_ui::notification_panel::NotificationPanel>(window, cx);
                 },
             )
             .register_action(
                 |workspace: &mut Workspace,
                  _: &terminal_panel::ToggleFocus,
                  cx: &mut ModelContext<Workspace>| {
-                    workspace.toggle_panel_focus::<TerminalPanel>(cx);
+                    workspace.toggle_panel_focus::<TerminalPanel>(window, cx);
                 },
             )
             .register_action({
@@ -569,7 +570,7 @@ pub fn initialize_workspace(
                 move |_, _: &NewWindow, cx| {
                     if let Some(app_state) = app_state.upgrade() {
                         open_new(Default::default(), app_state, cx, |workspace, cx| {
-                            Editor::new_file(workspace, &Default::default(), cx)
+                            Editor::new_file(workspace, &Default::default(), window, cx)
                         })
                         .detach();
                     }
@@ -580,7 +581,7 @@ pub fn initialize_workspace(
                 move |_, _: &NewFile, cx| {
                     if let Some(app_state) = app_state.upgrade() {
                         open_new(Default::default(), app_state, cx, |workspace, cx| {
-                            Editor::new_file(workspace, &Default::default(), cx)
+                            Editor::new_file(workspace, &Default::default(), window, cx)
                         })
                         .detach();
                     }
@@ -597,7 +598,7 @@ pub fn initialize_workspace(
                         let buffer = open_server_settings.await?;
 
                         workspace.update(&mut cx, |workspace, cx| {
-                            workspace.open_path(buffer.read(cx).project_path(cx).expect("Settings file must have a location"), None, true, cx)
+                            workspace.open_path(buffer.read(cx).project_path(cx).expect("Settings file must have a location"), None, true, window, cx)
                         })?.await?;
 
                         anyhow::Ok(())
@@ -814,7 +815,7 @@ fn open_log_file(workspace: &mut Workspace, cx: &mut ModelContext<Workspace>) {
                             })
                         });
 
-                        workspace.add_item_to_active_pane(Box::new(editor), None, true, cx);
+                        workspace.add_item_to_active_pane(Box::new(editor), None, true, window, cx);
                     })
                     .log_err();
             })
@@ -999,7 +1000,7 @@ fn open_local_file(
 
             let editor = workspace
                 .update(&mut cx, |workspace, cx| {
-                    workspace.open_path((tree_id, settings_relative_path), None, true, cx)
+                    workspace.open_path((tree_id, settings_relative_path), None, true, window, cx)
                 })?
                 .await?
                 .downcast::<Editor>()
@@ -1069,7 +1070,7 @@ fn open_telemetry_log_file(workspace: &mut Workspace, cx: &mut ModelContext<Work
                     })),
                     None,
                     true,
-                    cx,
+                    window, cx,
                 );
             }).log_err()?;
 
@@ -1109,6 +1110,7 @@ fn open_bundled_file(
                         })),
                         None,
                         true,
+                        window,
                         cx,
                     );
                 })
@@ -1713,7 +1715,7 @@ mod tests {
                 Default::default(),
                 app_state.clone(),
                 cx,
-                |workspace, cx| Editor::new_file(workspace, &Default::default(), cx),
+                |workspace, cx| Editor::new_file(workspace, &Default::default(), window, cx),
             )
         })
         .await

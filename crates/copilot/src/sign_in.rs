@@ -1,8 +1,8 @@
 use crate::{request::PromptUserDeviceFlow, Copilot, Status};
 use gpui::{
     div, AppContext, ClipboardItem, DismissEvent, Element, EventEmitter, FocusHandle,
-    FocusableView, InteractiveElement, IntoElement, Model, MouseDownEvent, ParentElement, Render,
-    Styled, Subscription, ModelContext,
+    FocusableView, InteractiveElement, IntoElement, Model, ModelContext, MouseDownEvent,
+    ParentElement, Render, Styled, Subscription,
 };
 use ui::{prelude::*, Button, Label, Vector, VectorName};
 use util::ResultExt as _;
@@ -42,7 +42,7 @@ pub fn initiate_sign_in(window: &mut Window, cx: &mut AppContext) {
 
             cx.spawn(|mut cx| async move {
                 task.await;
-                if let Some(copilot) = cx.update(|cx| Copilot::global(cx)).ok().flatten() {
+                if let Some(copilot) = cx.update(|window, cx| Copilot::global(cx)).ok().flatten() {
                     workspace
                         .update(&mut cx, |workspace, cx| match copilot.read(cx).status() {
                             Status::Authorized => workspace.show_toast(

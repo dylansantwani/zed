@@ -315,7 +315,7 @@ pub fn init(cx: &mut AppContext) {
         let app_state = workspace::AppState::global(cx);
         if let Some(app_state) = app_state.upgrade() {
             workspace::open_new(Default::default(), app_state, cx, |workspace, cx| {
-                Editor::new_file(workspace, &Default::default(), cx)
+                Editor::new_file(workspace, &Default::default(), window, cx)
             })
             .detach();
         }
@@ -324,7 +324,7 @@ pub fn init(cx: &mut AppContext) {
         let app_state = workspace::AppState::global(cx);
         if let Some(app_state) = app_state.upgrade() {
             workspace::open_new(Default::default(), app_state, cx, |workspace, cx| {
-                Editor::new_file(workspace, &Default::default(), cx)
+                Editor::new_file(workspace, &Default::default(), window, cx)
             })
             .detach();
         }
@@ -1300,6 +1300,7 @@ impl CompletionsMenu {
                         parsed,
                         &style,
                         workspace,
+                        window,
                         cx,
                     )))
                 }
@@ -2091,7 +2092,7 @@ impl Editor {
             buffer: buffer.clone(),
             display_map: display_map.clone(),
             selections,
-            scroll_manager: ScrollManager::new(cx),
+            scroll_manager: ScrollManager::new(window, cx),
             columnar_selection_tail: None,
             add_selections_state: None,
             select_next_state: None,
@@ -2304,15 +2305,17 @@ impl Editor {
     pub fn new_file(
         workspace: &mut Workspace,
         _: &workspace::NewFile,
+        window: &mut Window,
         cx: &mut ModelContext<Workspace>,
     ) {
         Self::new_in_workspace(workspace, cx).detach_and_prompt_err(
             "Failed to create buffer",
+            window,
             cx,
-            |e, _| match e.error_code() {
+            |error, _window, _cx| match error.error_code() {
                 ErrorCode::RemoteUpgradeRequired => Some(format!(
                 "The remote instance of Zed does not support this yet. It must be upgraded to {}",
-                e.error_tag("required").unwrap_or("the latest version")
+                error.error_tag("required").unwrap_or("the latest version")
             )),
                 _ => None,
             },
@@ -2331,7 +2334,7 @@ impl Editor {
             workspace.update(&mut cx, |workspace, cx| {
                 let editor =
                     cx.new_model(|cx| Editor::for_buffer(buffer, Some(project.clone()), cx));
-                workspace.add_item_to_active_pane(Box::new(editor.clone()), None, true, cx);
+                workspace.add_item_to_active_pane(Box::new(editor.clone()), None, true, window, cx);
                 editor
             })
         })
@@ -2342,7 +2345,7 @@ impl Editor {
         _: &workspace::NewFileSplitVertical,
         cx: &mut ModelContext<Workspace>,
     ) {
-        Self::new_file_in_direction(workspace, SplitDirection::vertical(cx), cx)
+        Self::new_file_in_direction(workspace, SplitDirection::vertical(window, cx), cx)
     }
 
     fn new_file_horizontal(
@@ -2350,7 +2353,7 @@ impl Editor {
         _: &workspace::NewFileSplitHorizontal,
         cx: &mut ModelContext<Workspace>,
     ) {
-        Self::new_file_in_direction(workspace, SplitDirection::horizontal(cx), cx)
+        Self::new_file_in_direction(workspace, SplitDirection::horizontal(window, cx), cx)
     }
 
     fn new_file_in_direction(
@@ -2374,13 +2377,18 @@ impl Editor {
             })?;
             anyhow::Ok(())
         })
-        .detach_and_prompt_err("Failed to create buffer", cx, |e, _| match e.error_code() {
-            ErrorCode::RemoteUpgradeRequired => Some(format!(
+        .detach_and_prompt_err(
+            "Failed to create buffer",
+            window,
+            cx,
+            |e, _window, _cx| match e.error_code() {
+                ErrorCode::RemoteUpgradeRequired => Some(format!(
                 "The remote instance of Zed does not support this yet. It must be upgraded to {}",
                 e.error_tag("required").unwrap_or("the latest version")
             )),
-            _ => None,
-        });
+                _ => None,
+            },
+        );
     }
 
     pub fn leader_peer_id(&self) -> Option<PeerId> {
@@ -2401,7 +2409,7 @@ impl Editor {
 
     pub fn snapshot(&mut self, window: &mut Window, cx: &mut AppContext) -> EditorSnapshot {
         let git_blame_gutter_max_author_length = self
-            .render_git_blame_gutter(cx)
+            .render_git_blame_gutter(window, cx)
             .then(|| {
                 if let Some(blame) = self.blame.as_ref() {
                     let max_author_length =
@@ -4850,7 +4858,7 @@ impl Editor {
             }
         }
         drop(context_menu);
-        let snapshot = self.snapshot(cx);
+        let snapshot = self.snapshot(window, cx);
         let deployed_from_indicator = action.deployed_from_indicator;
         let mut task = self.code_actions_task.take();
         let action = action.clone();
@@ -5008,7 +5016,7 @@ impl Editor {
                 provider,
             } => {
                 let apply_code_action =
-                    provider.apply_code_action(buffer, action, excerpt_id, true, cx);
+                    provider.apply_code_action(buffer, action, excerpt_id, true, window, cx);
                 let workspace = workspace.downgrade();
                 Some(cx.spawn(|editor, cx| async move {
                     let project_transaction = apply_code_action.await?;
@@ -5142,7 +5150,7 @@ impl Editor {
                 let tasks = this
                     .code_action_providers
                     .iter()
-                    .map(|provider| provider.code_actions(&start_buffer, start..end, cx))
+                    .map(|provider| provider.code_actions(&start_buffer, start..end, window, cx))
                     .collect::<Vec<_>>();
                 (providers, tasks)
             })?;
@@ -6597,7 +6605,7 @@ impl Editor {
         let Some(project) = self.project.clone() else {
             return;
         };
-        self.reload(project, cx).detach_and_notify_err(cx);
+        self.reload(project, cx).detach_and_notify_err(window, cx);
     }
 
     pub fn revert_selected_hunks(&mut self, _: &RevertSelectedHunks, cx: &mut ModelContext<Self>) {
@@ -8466,6 +8474,7 @@ impl Editor {
                     scroll_anchor: scroll_state,
                     scroll_top_row,
                 }),
+                window,
                 cx,
             );
         }
@@ -9772,7 +9781,7 @@ impl Editor {
         } else {
             selection.head()
         };
-        let snapshot = self.snapshot(cx);
+        let snapshot = self.snapshot(window, cx);
         loop {
             let diagnostics = if direction == Direction::Prev {
                 buffer.diagnostics_in_range::<_, usize>(0..search_start, true)
@@ -10104,7 +10113,7 @@ impl Editor {
             if let Some((_, path)) = result {
                 workspace
                     .update(&mut cx, |workspace, cx| {
-                        workspace.open_resolved_path(path, cx)
+                        workspace.open_resolved_path(path, window, cx)
                     })?
                     .await?;
             }
@@ -10149,7 +10158,7 @@ impl Editor {
                         cx.spawn(|_, mut cx| async move {
                             workspace
                                 .update(&mut cx, |workspace, cx| {
-                                    workspace.open_resolved_path(path, cx)
+                                    workspace.open_resolved_path(path, window, cx)
                                 })?
                                 .await
                                 .map(|_| TargetTaskResult::AlreadyNavigated)
@@ -10486,7 +10495,7 @@ impl Editor {
                     None
                 }
             });
-            workspace.add_item_to_active_pane(item.clone(), destination_index, true, cx);
+            workspace.add_item_to_active_pane(item.clone(), destination_index, true, window, cx);
         }
         workspace.active_pane().update(cx, |pane, cx| {
             pane.set_preview_item_id(Some(item_id), cx);
@@ -10909,7 +10918,7 @@ impl Editor {
 
     fn activate_diagnostics(&mut self, group_id: usize, cx: &mut ModelContext<Self>) -> bool {
         self.dismiss_diagnostics(cx);
-        let snapshot = self.snapshot(cx);
+        let snapshot = self.snapshot(window, cx);
         self.active_diagnostics = self.display_map.update(cx, |display_map, cx| {
             let buffer = self.buffer.read(cx).snapshot(cx);
 
@@ -11150,7 +11159,7 @@ impl Editor {
         while let Some((mut start_row, end_row, current_level)) = stack.pop() {
             while start_row < end_row {
                 match self
-                    .snapshot(cx)
+                    .snapshot(window, cx)
                     .crease_for_buffer_row(MultiBufferRow(start_row))
                 {
                     Some(crease) => {
@@ -11178,8 +11187,9 @@ impl Editor {
         let snapshot = self.buffer.read(cx).snapshot(cx);
 
         for row in 0..snapshot.max_buffer_row().0 {
-            if let Some(foldable_range) =
-                self.snapshot(cx).crease_for_buffer_row(MultiBufferRow(row))
+            if let Some(foldable_range) = self
+                .snapshot(window, cx)
+                .crease_for_buffer_row(MultiBufferRow(row))
             {
                 fold_ranges.push(foldable_range);
             }
@@ -11357,7 +11367,7 @@ impl Editor {
 
         if let Some(active_diagnostics) = self.active_diagnostics.take() {
             // Clear diagnostics block when folding a range that contains it.
-            let snapshot = self.snapshot(cx);
+            let snapshot = self.snapshot(window, cx);
             if snapshot.intersects_fold(active_diagnostics.primary_range.start) {
                 drop(snapshot);
                 self.active_diagnostics = Some(active_diagnostics);
@@ -11823,7 +11833,7 @@ impl Editor {
     pub fn toggle_git_blame(&mut self, _: &ToggleGitBlame, cx: &mut ModelContext<Self>) {
         self.show_git_blame_gutter = !self.show_git_blame_gutter;
 
-        if self.show_git_blame_gutter && !self.has_blame_entries(cx) {
+        if self.show_git_blame_gutter && !self.has_blame_entries(window, cx) {
             self.start_git_blame(true, cx);
         }
 
@@ -11913,14 +11923,14 @@ impl Editor {
     }
 
     pub fn render_git_blame_gutter(&mut self, window: &mut Window, cx: &mut AppContext) -> bool {
-        self.show_git_blame_gutter && self.has_blame_entries(cx)
+        self.show_git_blame_gutter && self.has_blame_entries(window, cx)
     }
 
     pub fn render_git_blame_inline(&mut self, window: &mut Window, cx: &mut AppContext) -> bool {
         self.show_git_blame_inline
             && self.focus_handle.is_focused(cx)
-            && !self.newest_selection_head_on_empty_line(cx)
-            && self.has_blame_entries(cx)
+            && !self.newest_selection_head_on_empty_line(window, cx)
+            && self.has_blame_entries(window, cx)
     }
 
     pub fn render_active_line_trailer(
@@ -11944,7 +11954,7 @@ impl Editor {
         let focus_handle = self.focus_handle.clone();
         self.active_line_trailer_provider
             .as_mut()?
-            .render_active_line_trailer(style, &focus_handle, cx)
+            .render_active_line_trailer(style, &focus_handle, window, cx)
     }
 
     fn has_blame_entries(&self, window: &mut Window, cx: &mut AppContext) -> bool {
@@ -12225,7 +12235,7 @@ impl Editor {
         window: &mut Window,
         cx: &mut AppContext,
     ) -> BTreeMap<DisplayRow, Hsla> {
-        let snapshot = self.snapshot(cx);
+        let snapshot = self.snapshot(window, cx);
         let mut used_highlight_orders = HashMap::default();
         self.highlighted_rows
             .iter()
@@ -12341,7 +12351,7 @@ impl Editor {
         &mut self,
         cx: &mut ModelContext<Self>,
     ) -> Vec<(Range<DisplayPoint>, Hsla)> {
-        let snapshot = self.snapshot(cx);
+        let snapshot = self.snapshot(window, cx);
         let buffer = &snapshot.buffer_snapshot;
         let start = buffer.anchor_before(0);
         let end = buffer.anchor_after(buffer.len());
@@ -12959,8 +12969,14 @@ impl Editor {
                 };
 
                 for (buffer, (ranges, scroll_offset)) in new_selections_by_buffer {
-                    let editor =
-                        workspace.open_project_item::<Self>(pane.clone(), buffer, true, true, cx);
+                    let editor = workspace.open_project_item::<Self>(
+                        pane.clone(),
+                        buffer,
+                        true,
+                        true,
+                        window,
+                        cx,
+                    );
                     editor.update(cx, |editor, cx| {
                         let autoscroll = match scroll_offset {
                             Some(scroll_offset) => Autoscroll::top_relative(scroll_offset as usize),
@@ -14757,7 +14773,7 @@ impl ViewInputHandler for Editor {
             .size
             .width;
 
-        let snapshot = self.snapshot(cx);
+        let snapshot = self.snapshot(window, cx);
         let scroll_position = snapshot.scroll_position();
         let scroll_left = scroll_position.x * em_width;
 

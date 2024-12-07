@@ -7,8 +7,8 @@ use crate::{
 };
 use gpui::{
     div, px, AnyElement, AsyncWindowContext, FontWeight, Hsla, InteractiveElement, IntoElement,
-    MouseButton, ParentElement, Pixels, ScrollHandle, Size, Stateful, StatefulInteractiveElement,
-    StyleRefinement, Styled, Task, TextStyleRefinement, View, ModelContext,
+    ModelContext, MouseButton, ParentElement, Pixels, ScrollHandle, Size, Stateful,
+    StatefulInteractiveElement, StyleRefinement, Styled, Task, TextStyleRefinement, View,
 };
 use itertools::Itertools;
 use language::{Diagnostic, DiagnosticEntry, Language, LanguageRegistry};
@@ -202,7 +202,7 @@ fn show_hover(
         return None;
     }
 
-    let snapshot = editor.snapshot(cx);
+    let snapshot = editor.snapshot(window, cx);
 
     let (buffer, buffer_position) = editor
         .buffer
@@ -378,7 +378,7 @@ fn show_hover(
                             },
                             ..Default::default()
                         };
-                        Markdown::new_text(text, markdown_style.clone(), None, cx, None)
+                        Markdown::new_text(text, markdown_style.clone(), None, None, window, cx)
                     })
                     .ok();
 
@@ -404,7 +404,7 @@ fn show_hover(
             } else {
                 Vec::new()
             };
-            let snapshot = this.update(&mut cx, |this, cx| this.snapshot(cx))?;
+            let snapshot = this.update(&mut cx, |this, cx| this.snapshot(window, cx))?;
             let mut hover_highlights = Vec::with_capacity(hovers_response.len());
             let mut info_popovers = Vec::with_capacity(hovers_response.len());
             let mut info_popover_tasks = Vec::with_capacity(hovers_response.len());
@@ -593,8 +593,9 @@ async fn parse_blocks(
                 combined_text,
                 markdown_style.clone(),
                 Some(language_registry.clone()),
-                cx,
                 fallback_language_name,
+                window,
+                cx,
             )
         })
         .ok();
@@ -932,7 +933,7 @@ mod tests {
                 fn test() { printˇln!(); }
             "});
         cx.update_editor(|editor, cx| {
-            let snapshot = editor.snapshot(cx);
+            let snapshot = editor.snapshot(window, cx);
             let anchor = snapshot
                 .buffer_snapshot
                 .anchor_before(hover_point.to_offset(&snapshot, Bias::Left));
@@ -1030,7 +1031,7 @@ mod tests {
             .lsp
             .handle_request::<lsp::request::HoverRequest, _, _>(|_, _| async move { Ok(None) });
         cx.update_editor(|editor, cx| {
-            let snapshot = editor.snapshot(cx);
+            let snapshot = editor.snapshot(window, cx);
             let anchor = snapshot
                 .buffer_snapshot
                 .anchor_before(hover_point.to_offset(&snapshot, Bias::Left));
@@ -1068,7 +1069,7 @@ mod tests {
         "});
 
         cx.update_editor(|editor, cx| {
-            let snapshot = editor.snapshot(cx);
+            let snapshot = editor.snapshot(window, cx);
             let anchor = snapshot
                 .buffer_snapshot
                 .anchor_before(hover_point.to_offset(&snapshot, Bias::Left));
@@ -1120,7 +1121,7 @@ mod tests {
             .lsp
             .handle_request::<lsp::request::HoverRequest, _, _>(|_, _| async move { Ok(None) });
         cx.update_editor(|editor, cx| {
-            let snapshot = editor.snapshot(cx);
+            let snapshot = editor.snapshot(window, cx);
             let anchor = snapshot
                 .buffer_snapshot
                 .anchor_before(hover_point.to_offset(&snapshot, Bias::Left));
@@ -1578,7 +1579,7 @@ mod tests {
             .cloned()
             .unwrap();
         let new_type_hint_part_hover_position = cx.update_editor(|editor, cx| {
-            let snapshot = editor.snapshot(cx);
+            let snapshot = editor.snapshot(window, cx);
             let previous_valid = inlay_range.start.to_display_point(&snapshot);
             let next_valid = inlay_range.end.to_display_point(&snapshot);
             assert_eq!(previous_valid.row(), next_valid.row());
@@ -1598,7 +1599,7 @@ mod tests {
         });
         cx.update_editor(|editor, cx| {
             update_inlay_link_and_hover_points(
-                &editor.snapshot(cx),
+                &editor.snapshot(window, cx),
                 new_type_hint_part_hover_position,
                 editor,
                 true,
@@ -1668,7 +1669,7 @@ mod tests {
 
         cx.update_editor(|editor, cx| {
             update_inlay_link_and_hover_points(
-                &editor.snapshot(cx),
+                &editor.snapshot(window, cx),
                 new_type_hint_part_hover_position,
                 editor,
                 true,
@@ -1702,7 +1703,7 @@ mod tests {
         });
 
         let struct_hint_part_hover_position = cx.update_editor(|editor, cx| {
-            let snapshot = editor.snapshot(cx);
+            let snapshot = editor.snapshot(window, cx);
             let previous_valid = inlay_range.start.to_display_point(&snapshot);
             let next_valid = inlay_range.end.to_display_point(&snapshot);
             assert_eq!(previous_valid.row(), next_valid.row());
@@ -1722,7 +1723,7 @@ mod tests {
         });
         cx.update_editor(|editor, cx| {
             update_inlay_link_and_hover_points(
-                &editor.snapshot(cx),
+                &editor.snapshot(window, cx),
                 struct_hint_part_hover_position,
                 editor,
                 true,

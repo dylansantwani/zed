@@ -23,7 +23,7 @@ fn task_context_with_editor(
         else {
             return AsyncTask::ready(None);
         };
-        let snapshot = editor.snapshot(cx);
+        let snapshot = editor.snapshot(window, cx);
         (selection, buffer, snapshot)
     };
     let selection_range = selection.range();
@@ -87,7 +87,7 @@ pub fn task_context(
         return AsyncTask::ready(TaskContext::default());
     };
     editor.update(cx, |editor, cx| {
-        let context_task = task_context_with_editor(editor, cx);
+        let context_task = task_context_with_editor(editor, window, cx);
         cx.background_executor()
             .spawn(async move { context_task.await.unwrap_or_default() })
     })

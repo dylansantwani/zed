@@ -51,7 +51,7 @@ pub fn init(cx: &mut AppContext) {
                     .as_ref()
                     .is_some_and(|panel| panel.read(cx).enabled)
                 {
-                    workspace.toggle_panel_focus::<TerminalPanel>(cx);
+                    workspace.toggle_panel_focus::<TerminalPanel>(window, cx);
                 }
             });
         },
@@ -839,7 +839,7 @@ impl Panel for TerminalPanel {
 
     fn size(&self, cx: &WindowContext) -> Pixels {
         let settings = TerminalSettings::get_global(cx);
-        match self.position(cx) {
+        match self.position(window, cx) {
             DockPosition::Left | DockPosition::Right => {
                 self.width.unwrap_or(settings.default_width)
             }
@@ -848,7 +848,7 @@ impl Panel for TerminalPanel {
     }
 
     fn set_size(&mut self, size: Option<Pixels>, cx: &mut ModelContext<Self>) {
-        match self.position(cx) {
+        match self.position(window, cx) {
             DockPosition::Left | DockPosition::Right => self.width = size,
             DockPosition::Bottom => self.height = size,
         }

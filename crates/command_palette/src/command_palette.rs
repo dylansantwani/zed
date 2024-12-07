@@ -64,7 +64,7 @@ impl CommandPalette {
             return;
         };
         let telemetry = workspace.client().telemetry().clone();
-        workspace.toggle_modal(cx, move |cx| {
+        workspace.toggle_modal(window, cx, move |window, cx| {
             CommandPalette::new(previous_focus_handle, telemetry, query, cx)
         });
     }
@@ -101,7 +101,7 @@ impl CommandPalette {
 
         let picker = cx.new_model(|cx| {
             let picker = Picker::uniform_list(delegate, cx);
-            picker.set_query(query, cx);
+            picker.set_query(query, window, cx);
             picker
         });
         Self { picker }
@@ -482,7 +482,8 @@ mod tests {
     async fn test_command_palette(cx: &mut TestAppContext) {
         let app_state = init_test(cx);
         let project = Project::test(app_state.fs.clone(), [], cx).await;
-        let (workspace, cx) = cx.add_window_view(|cx| Workspace::test_new(project.clone(), cx));
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), cx));
 
         let editor = cx.new_model(|cx| {
             let mut editor = Editor::single_line(cx);
@@ -491,8 +492,8 @@ mod tests {
         });
 
         workspace.update(cx, |workspace, cx| {
-            workspace.add_item_to_active_pane(Box::new(editor.clone()), None, true, cx);
-            editor.update(cx, |editor, cx| editor.focus(window))
+            workspace.add_item_to_active_pane(Box::new(editor.clone()), None, true, window, cx);
+            editor.update(cx, |editor, cx| editor.focus(window, cx))
         });
 
         cx.simulate_keystrokes("cmd-shift-p");
@@ -553,7 +554,8 @@ mod tests {
     async fn test_go_to_line(cx: &mut TestAppContext) {
         let app_state = init_test(cx);
         let project = Project::test(app_state.fs.clone(), [], cx).await;
-        let (workspace, cx) = cx.add_window_view(|cx| Workspace::test_new(project.clone(), cx));
+        let (workspace, cx) =
+            cx.add_window_view(|window, cx| Workspace::test_new(project.clone(), cx));
 
         cx.simulate_keystrokes("cmd-n");
 

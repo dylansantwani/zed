@@ -15,7 +15,7 @@ use futures::{channel::mpsc, StreamExt};
 use gpui::{
     AnyElement, AnyModel, AnyView, AppContext, Entity, EntityId, EventEmitter, FocusHandle,
     FocusableView, Font, HighlightStyle, Model, ModelContext, Pixels, Point, Render, SharedString,
-    Task, View, WeakModel, WeakView, WindowContext,
+    Task, WeakModel, Window,
 };
 use project::{Project, ProjectEntryId, ProjectPath};
 use schemars::JsonSchema;
@@ -31,7 +31,7 @@ use std::{
     time::Duration,
 };
 use theme::Theme;
-use ui::{prelude::Window, Color, Element as _, Icon, IntoElement, Label, LabelCommon};
+use ui::{Color, Element as _, Icon, IntoElement, Label, LabelCommon};
 use util::ResultExt;
 
 pub const LEADER_UPDATE_THROTTLE: Duration = Duration::from_millis(200);
@@ -164,7 +164,7 @@ pub trait Item: FocusableView + EventEmitter<Self::Event> + Render {
     ///
     /// By default this returns a [`Label`] that displays that text from
     /// `tab_content_text`.
-    fn tab_content(&self, params: TabContentParams, cx: &WindowContext) -> AnyElement {
+    fn tab_content(&self, params: TabContentParams, cx: &AppContext) -> AnyElement {
         let Some(text) = self.tab_content_text(cx) else {
             return gpui::Empty.into_any();
         };
@@ -177,11 +177,11 @@ pub trait Item: FocusableView + EventEmitter<Self::Event> + Render {
     /// Returns the textual contents of the tab.
     ///
     /// Use this if you don't need to customize the tab contents.
-    fn tab_content_text(&self, _cx: &WindowContext) -> Option<SharedString> {
+    fn tab_content_text(&self, _window: &Window, _cx: &AppContext) -> Option<SharedString> {
         None
     }
 
-    fn tab_icon(&self, _cx: &WindowContext) -> Option<Icon> {
+    fn tab_icon(&self, _window: &Window, _cx: &AppContext) -> Option<Icon> {
         None
     }
 
@@ -337,7 +337,6 @@ pub trait SerializableItemHandle: ItemHandle {
         &self,
         workspace: &mut Workspace,
         closing: bool,
-        window: &mut Window,
         cx: &mut AppContext,
     ) -> Option<Task<Result<()>>>;
     fn should_serialize(&self, event: &dyn Any, cx: &AppContext) -> bool;
@@ -355,7 +354,6 @@ where
         &self,
         workspace: &mut Workspace,
         closing: bool,
-        window: &mut Window,
         cx: &mut AppContext,
     ) -> Option<Task<Result<()>>> {
         self.update(cx, |this, cx| {
@@ -375,15 +373,15 @@ pub trait ItemHandle: 'static + Send {
         &self,
         window: &mut Window,
         cx: &mut AppContext,
-        handler: Box<dyn Fn(ItemEvent, &mut WindowContext)>,
+        handler: Box<dyn Fn(ItemEvent, &mut Window, &mut AppContext)>,
     ) -> gpui::Subscription;
     fn focus_handle(&self, cx: &AppContext) -> FocusHandle;
     fn tab_tooltip_text(&self, cx: &AppContext) -> Option<SharedString>;
     fn tab_description(&self, detail: usize, cx: &AppContext) -> Option<SharedString>;
-    fn tab_content(&self, params: TabContentParams, cx: &WindowContext) -> AnyElement;
-    fn tab_icon(&self, cx: &WindowContext) -> Option<Icon>;
-    fn telemetry_event_text(&self, cx: &WindowContext) -> Option<&'static str>;
-    fn dragged_tab_content(&self, params: TabContentParams, cx: &WindowContext) -> AnyElement;
+    fn tab_content(&self, params: TabContentParams, cx: &AppContext) -> AnyElement;
+    fn tab_icon(&self, cx: &AppContext) -> Option<Icon>;
+    fn telemetry_event_text(&self, cx: &AppContext) -> Option<&'static str>;
+    fn dragged_tab_content(&self, params: TabContentParams, cx: &AppContext) -> AnyElement;
     fn project_path(&self, cx: &AppContext) -> Option<ProjectPath>;
     fn project_entry_ids(&self, cx: &AppContext) -> SmallVec<[ProjectEntryId; 3]>;
     fn project_paths(&self, cx: &AppContext) -> SmallVec<[ProjectPath; 3]>;
@@ -475,10 +473,16 @@ impl<T: Item> ItemHandle for Model<T> {
         &self,
         window: &mut Window,
         cx: &mut AppContext,
-        handler: Box<dyn Fn(ItemEvent, &mut WindowContext)>,
+        handler: Box<dyn Fn(ItemEvent, &mut Window, &mut AppContext)>,
     ) -> gpui::Subscription {
+        let window = window.handle();
+
         cx.subscribe(self, move |_, event, cx| {
-            T::to_item_events(event, |item_event| handler(item_event, cx));
+            window
+                .update(cx, |window, cx| {
+                    T::to_item_events(event, |item_event| handler(item_event, window, cx));
+                })
+                .ok();
         })
     }
 
@@ -490,7 +494,7 @@ impl<T: Item> ItemHandle for Model<T> {
         self.read(cx).tab_tooltip_text(cx)
     }
 
-    fn telemetry_event_text(&self, cx: &WindowContext) -> Option<&'static str> {
+    fn telemetry_event_text(&self, cx: &AppContext) -> Option<&'static str> {
         self.read(cx).telemetry_event_text()
     }
 
@@ -498,15 +502,15 @@ impl<T: Item> ItemHandle for Model<T> {
         self.read(cx).tab_description(detail, cx)
     }
 
-    fn tab_content(&self, params: TabContentParams, cx: &WindowContext) -> AnyElement {
+    fn tab_content(&self, params: TabContentParams, cx: &AppContext) -> AnyElement {
         self.read(cx).tab_content(params, cx)
     }
 
-    fn tab_icon(&self, cx: &WindowContext) -> Option<Icon> {
+    fn tab_icon(&self, cx: &AppContext) -> Option<Icon> {
         self.read(cx).tab_icon(cx)
     }
 
-    fn dragged_tab_content(&self, params: TabContentParams, cx: &WindowContext) -> AnyElement {
+    fn dragged_tab_content(&self, params: TabContentParams, cx: &AppContext) -> AnyElement {
         self.read(cx).tab_content(
             TabContentParams {
                 selected: true,
@@ -650,6 +654,7 @@ impl<T: Item> ItemHandle for Model<T> {
                                             leader_id,
                                         },
                                     ),
+                                    window,
                                     cx,
                                 );
                             })?;
@@ -734,19 +739,14 @@ impl<T: Item> ItemHandle for Model<T> {
             window
                 .on_blur(
                     &FocusableView::focus_handle(self, cx),
-                    move |workspace, cx| {
+                    cx,
+                    move |window, cx: &mut AppContext| {
                         if let Some(item) = weak_item.upgrade() {
                             if item.workspace_settings(cx).autosave
                                 == AutosaveSetting::OnFocusChange
                             {
-                                Pane::autosave_item(
-                                    &item,
-                                    workspace.project.clone(),
-                                    window,
-                                    window,
-                                    cx,
-                                )
-                                .detach_and_log_err(cx);
+                                Pane::autosave_item(&item, workspace.project.clone(), cx)
+                                    .detach_and_log_err(cx);
                             }
                         }
                     },
@@ -814,7 +814,7 @@ impl<T: Item> ItemHandle for Model<T> {
         window: &mut Window,
         cx: &mut AppContext,
     ) -> Task<Result<()>> {
-        self.update(cx, |item, cx| item.save(format, project, window, cx))
+        self.update(cx, |item, cx| item.save(format, project, cx))
     }
 
     fn save_as(
@@ -837,7 +837,7 @@ impl<T: Item> ItemHandle for Model<T> {
     }
 
     fn act_as_type<'a>(&'a self, type_id: TypeId, cx: &'a AppContext) -> Option<AnyView> {
-        self.read(cx).act_as_type(type_id, self, window, cx)
+        self.read(cx).act_as_type(type_id, self, cx)
     }
 
     fn to_followable_item_handle(&self, cx: &AppContext) -> Option<Box<dyn FollowableItemHandle>> {
@@ -880,7 +880,7 @@ impl<T: Item> ItemHandle for Model<T> {
         &self,
         cx: &AppContext,
     ) -> Option<Box<dyn SerializableItemHandle>> {
-        SerializableItemRegistry::view_to_serializable_item_handle(self.to_any(), window, cx)
+        SerializableItemRegistry::view_to_serializable_item_handle(self.to_any(), cx)
     }
 
     fn preserve_preview(&self, cx: &AppContext) -> bool {
@@ -926,6 +926,7 @@ pub trait ProjectItem: Item {
     fn for_project_item(
         project: Model<Project>,
         item: Model<Self::Item>,
+        window: &mut Window,
         cx: &mut ModelContext<Self>,
     ) -> Self
     where
@@ -944,7 +945,7 @@ pub enum Dedup {
 
 pub trait FollowableItem: Item {
     fn remote_id(&self) -> Option<ViewId>;
-    fn to_state_proto(&self, cx: &WindowContext) -> Option<proto::view::Variant>;
+    fn to_state_proto(&self, cx: &AppContext) -> Option<proto::view::Variant>;
     fn from_state_proto(
         project: Model<Workspace>,
         id: ViewId,
@@ -957,7 +958,7 @@ pub trait FollowableItem: Item {
         &self,
         event: &Self::Event,
         update: &mut Option<proto::update_view::Variant>,
-        cx: &WindowContext,
+        cx: &AppContext,
     ) -> bool;
     fn apply_update_proto(
         &mut self,
@@ -965,13 +966,13 @@ pub trait FollowableItem: Item {
         message: proto::update_view::Variant,
         cx: &mut ModelContext<Self>,
     ) -> Task<Result<()>>;
-    fn is_project_item(&self, cx: &WindowContext) -> bool;
+    fn is_project_item(&self, cx: &AppContext) -> bool;
     fn set_leader_peer_id(&mut self, leader_peer_id: Option<PeerId>, cx: &mut ModelContext<Self>);
-    fn dedup(&self, existing: &Self, cx: &WindowContext) -> Option<Dedup>;
+    fn dedup(&self, existing: &Self, cx: &AppContext) -> Option<Dedup>;
 }
 
 pub trait FollowableItemHandle: ItemHandle {
-    fn remote_id(&self, client: &Arc<Client>, cx: &WindowContext) -> Option<ViewId>;
+    fn remote_id(&self, client: &Arc<Client>, cx: &AppContext) -> Option<ViewId>;
     fn downgrade(&self) -> Box<dyn WeakFollowableItemHandle>;
     fn set_leader_peer_id(
         &self,
@@ -979,12 +980,12 @@ pub trait FollowableItemHandle: ItemHandle {
         window: &mut Window,
         cx: &mut AppContext,
     );
-    fn to_state_proto(&self, cx: &WindowContext) -> Option<proto::view::Variant>;
+    fn to_state_proto(&self, cx: &AppContext) -> Option<proto::view::Variant>;
     fn add_event_to_update_proto(
         &self,
         event: &dyn Any,
         update: &mut Option<proto::update_view::Variant>,
-        cx: &WindowContext,
+        cx: &AppContext,
     ) -> bool;
     fn to_follow_event(&self, event: &dyn Any) -> Option<FollowEvent>;
     fn apply_update_proto(
@@ -994,12 +995,12 @@ pub trait FollowableItemHandle: ItemHandle {
         window: &mut Window,
         cx: &mut AppContext,
     ) -> Task<Result<()>>;
-    fn is_project_item(&self, cx: &WindowContext) -> bool;
-    fn dedup(&self, existing: &dyn FollowableItemHandle, cx: &WindowContext) -> Option<Dedup>;
+    fn is_project_item(&self, cx: &AppContext) -> bool;
+    fn dedup(&self, existing: &dyn FollowableItemHandle, cx: &AppContext) -> Option<Dedup>;
 }
 
 impl<T: FollowableItem> FollowableItemHandle for Model<T> {
-    fn remote_id(&self, client: &Arc<Client>, cx: &WindowContext) -> Option<ViewId> {
+    fn remote_id(&self, client: &Arc<Client>, cx: &AppContext) -> Option<ViewId> {
         self.read(cx).remote_id().or_else(|| {
             client.peer_id().map(|creator| ViewId {
                 creator,
@@ -1021,7 +1022,7 @@ impl<T: FollowableItem> FollowableItemHandle for Model<T> {
         self.update(cx, |this, cx| this.set_leader_peer_id(leader_peer_id, cx))
     }
 
-    fn to_state_proto(&self, cx: &WindowContext) -> Option<proto::view::Variant> {
+    fn to_state_proto(&self, cx: &AppContext) -> Option<proto::view::Variant> {
         self.read(cx).to_state_proto(cx)
     }
 
@@ -1029,7 +1030,7 @@ impl<T: FollowableItem> FollowableItemHandle for Model<T> {
         &self,
         event: &dyn Any,
         update: &mut Option<proto::update_view::Variant>,
-        cx: &WindowContext,
+        cx: &AppContext,
     ) -> bool {
         if let Some(event) = event.downcast_ref() {
             self.read(cx).add_event_to_update_proto(event, update, cx)
@@ -1052,11 +1053,11 @@ impl<T: FollowableItem> FollowableItemHandle for Model<T> {
         self.update(cx, |this, cx| this.apply_update_proto(project, message, cx))
     }
 
-    fn is_project_item(&self, cx: &WindowContext) -> bool {
+    fn is_project_item(&self, cx: &AppContext) -> bool {
         self.read(cx).is_project_item(cx)
     }
 
-    fn dedup(&self, existing: &dyn FollowableItemHandle, cx: &WindowContext) -> Option<Dedup> {
+    fn dedup(&self, existing: &dyn FollowableItemHandle, cx: &AppContext) -> Option<Dedup> {
         let existing = existing.to_any().downcast::<T>().ok()?;
         self.read(cx).dedup(existing.read(cx), cx)
     }
@@ -1218,7 +1219,7 @@ pub mod test {
 
         fn push_to_nav_history(&mut self, cx: &mut ModelContext<Self>) {
             if let Some(history) = &mut self.nav_history {
-                history.push(Some(Box::new(self.state.clone())), cx);
+                history.push(Some(Box::new(self.state.clone())), window, cx);
             }
         }
     }
@@ -1258,7 +1259,7 @@ pub mod test {
         fn tab_content(
             &self,
             params: TabContentParams,
-            _cx: &ui::prelude::WindowContext,
+            _cx: &ui::prelude::AppContext,
         ) -> AnyElement {
             self.tab_detail.set(params.detail);
             gpui::div().into_any_element()
@@ -1392,7 +1393,7 @@ pub mod test {
         fn cleanup(
             _workspace_id: WorkspaceId,
             _alive_items: Vec<ItemId>,
-            _cx: &mut ui::WindowContext,
+            _cx: &mut ui::AppContext,
         ) -> Task<anyhow::Result<()>> {
             Task::ready(Ok(()))
         }

@@ -17,10 +17,10 @@ use workspace::Workspace;
 actions!(debug, [OpenKeyContextView]);
 
 pub fn init(cx: &mut AppContext) {
-    cx.observe_new_views(|workspace: &mut Workspace, _| {
+    cx.observe_new_models(|workspace: &mut Workspace, _| {
         workspace.register_action(|workspace, _: &OpenKeyContextView, cx| {
-            let key_context_view = cx.new_view(KeyContextView::new);
-            workspace.add_item_to_active_pane(Box::new(key_context_view), None, true, cx)
+            let key_context_view = cx.new_model(KeyContextView::new);
+            workspace.add_item_to_active_pane(Box::new(key_context_view), None, true, window, cx)
         });
     })
     .detach();
@@ -220,7 +220,7 @@ impl Render for KeyContextView {
                     .child(
                         Button::new("default", "Edit your keymap")
                             .style(ButtonStyle::Filled)
-                            .key_binding(ui::KeyBinding::for_action(&zed_actions::OpenKeymap, cx))
+                            .key_binding(ui::KeyBinding::for_action(&zed_actions::OpenKeymap, window, cx))
                             .on_click(|_, cx| {
                                 cx.dispatch_action(workspace::SplitRight.boxed_clone());
                                 cx.dispatch_action(zed_actions::OpenKeymap.boxed_clone());

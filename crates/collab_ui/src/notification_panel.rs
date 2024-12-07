@@ -8,9 +8,8 @@ use futures::StreamExt;
 use gpui::{
     actions, div, img, list, px, AnyElement, AppContext, AsyncWindowContext, CursorStyle,
     DismissEvent, Element, EventEmitter, FocusHandle, FocusableView, InteractiveElement,
-    IntoElement, ListAlignment, ListScrollEvent, ListState, Model, ParentElement, Render,
-    StatefulInteractiveElement, Styled, Task, View, ModelContext, VisualContext, WeakView,
-    WindowContext,
+    IntoElement, ListAlignment, ListScrollEvent, ListState, Model, ModelContext, ParentElement,
+    Render, StatefulInteractiveElement, Styled, Task, View, VisualContext, WeakView, WindowContext,
 };
 use notifications::{NotificationEntry, NotificationEvent, NotificationStore};
 use project::Fs;
@@ -76,9 +75,9 @@ pub struct NotificationPresenter {
 actions!(notification_panel, [ToggleFocus]);
 
 pub fn init(cx: &mut AppContext) {
-    cx.observe_new_views(|workspace: &mut Workspace, _| {
+    cx.observe_new_models(|workspace: &mut Workspace, _| {
         workspace.register_action(|workspace, _: &ToggleFocus, cx| {
-            workspace.toggle_panel_focus::<NotificationPanel>(cx);
+            workspace.toggle_panel_focus::<NotificationPanel>(window, cx);
         });
     })
     .detach();
@@ -149,12 +148,12 @@ impl NotificationPanel {
                 unseen_notifications: Vec::new(),
             };
 
-            let mut old_dock_position = this.position(cx);
+            let mut old_dock_position = this.position(window, cx);
             this.subscriptions.extend([
                 cx.observe(&this.notification_store, |_, _, cx| cx.notify()),
                 cx.subscribe(&this.notification_store, Self::on_notification_event),
                 cx.observe_global::<SettingsStore>(move |this: &mut Self, cx| {
-                    let new_dock_position = this.position(cx);
+                    let new_dock_position = this.position(window, cx);
                     if new_dock_position != old_dock_position {
                         old_dock_position = new_dock_position;
                         cx.emit(Event::DockPositionChanged);

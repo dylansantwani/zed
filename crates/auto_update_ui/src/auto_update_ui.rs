@@ -2,7 +2,7 @@ mod update_notification;
 
 use auto_update::AutoUpdater;
 use editor::{Editor, MultiBuffer};
-use gpui::{actions, prelude::*, AppContext, SharedString, View, ModelContext};
+use gpui::{actions, prelude::*, AppContext, ModelContext, SharedString, View};
 use http_client::HttpClient;
 use markdown_preview::markdown_preview_view::{MarkdownPreviewMode, MarkdownPreviewView};
 use release_channel::{AppVersion, ReleaseChannel};
@@ -105,6 +105,7 @@ fn view_release_notes_locally(workspace: &mut Workspace, cx: &mut ModelContext<W
                                 Box::new(view.clone()),
                                 None,
                                 true,
+                                window,
                                 cx,
                             );
                             cx.notify();

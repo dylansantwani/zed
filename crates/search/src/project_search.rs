@@ -99,7 +99,7 @@ pub fn init(cx: &mut AppContext) {
 
         // Both on present and dismissed search, we need to unconditionally handle those actions to focus from the editor.
         workspace.register_action(move |workspace, action: &DeploySearch, cx| {
-            if workspace.has_active_modal(cx) {
+            if workspace.has_active_modal(window, cx) {
                 cx.propagate();
                 return;
             }
@@ -107,7 +107,7 @@ pub fn init(cx: &mut AppContext) {
             cx.notify();
         });
         workspace.register_action(move |workspace, action: &NewSearch, cx| {
-            if workspace.has_active_modal(cx) {
+            if workspace.has_active_modal(window, cx) {
                 cx.propagate();
                 return;
             }
@@ -788,7 +788,7 @@ impl ProjectSearchView {
 
         let model = cx.new_model(|cx| ProjectSearch::new(workspace.project().clone(), cx));
         let search = cx.new_model(|cx| ProjectSearchView::new(weak_workspace, model, cx, None));
-        workspace.add_item_to_active_pane(Box::new(search.clone()), None, true, cx);
+        workspace.add_item_to_active_pane(Box::new(search.clone()), None, true, window, cx);
         search.update(cx, |search, cx| {
             search
                 .included_files_editor
@@ -844,6 +844,7 @@ impl ProjectSearchView {
                     ),
                     None,
                     true,
+                    window,
                     cx,
                 );
             }
@@ -880,7 +881,7 @@ impl ProjectSearchView {
         });
 
         let search = if let Some(existing) = existing {
-            workspace.activate_item(&existing, true, true, cx);
+            workspace.activate_item(&existing, true, true, window, cx);
             existing
         } else {
             let settings = cx
@@ -896,7 +897,7 @@ impl ProjectSearchView {
             let view =
                 cx.new_model(|cx| ProjectSearchView::new(weak_workspace, model, cx, settings));
 
-            workspace.add_item_to_active_pane(Box::new(view.clone()), None, true, cx);
+            workspace.add_item_to_active_pane(Box::new(view.clone()), None, true, window, cx);
             view
         };
 
@@ -1059,7 +1060,7 @@ impl ProjectSearchView {
                 && ((direction == Direction::Next && index + 1 >= match_ranges.len())
                     || (direction == Direction::Prev && index == 0))
             {
-                crate::show_no_more_matches(cx);
+                crate::show_no_more_matches(window, cx);
                 return;
             }
 
@@ -1989,7 +1990,7 @@ fn register_workspace_action<A: Action>(
     callback: fn(&mut ProjectSearchBar, &A, &mut ModelContext<ProjectSearchBar>),
 ) {
     workspace.register_action(move |workspace, action: &A, cx| {
-        if workspace.has_active_modal(cx) {
+        if workspace.has_active_modal(window, cx) {
             cx.propagate();
             return;
         }
@@ -2016,7 +2017,7 @@ fn register_workspace_action_for_present_search<A: Action>(
     callback: fn(&mut Workspace, &A, &mut ModelContext<Workspace>),
 ) {
     workspace.register_action(move |workspace, action: &A, cx| {
-        if workspace.has_active_modal(cx) {
+        if workspace.has_active_modal(window, cx) {
             cx.propagate();
             return;
         }

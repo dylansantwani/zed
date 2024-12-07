@@ -88,7 +88,7 @@ impl Render for InlineCompletionButton {
                                                     NotificationId::unique::<CopilotErrorToast>(),
                                                     format!("Copilot can't be started: {}", e),
                                                 )
-                                                .on_click("Reinstall Copilot", |cx| {
+                                                .on_click("Reinstall Copilot", |window, cx| {
                                                     if let Some(copilot) = Copilot::global(cx) {
                                                         copilot
                                                             .update(cx, |copilot, cx| {
@@ -239,7 +239,8 @@ impl InlineCompletionButton {
     pub fn build_language_settings_menu(
         &self,
         mut menu: ContextMenu,
-        window: &mut Window, cx: &mut AppContext,
+        window: &mut Window,
+        cx: &mut AppContext,
     ) -> ContextMenu {
         let fs = self.fs.clone();
 
@@ -304,7 +305,7 @@ impl InlineCompletionButton {
 
     fn build_copilot_context_menu(&self, cx: &mut ModelContext<Self>) -> Model<ContextMenu> {
         ContextMenu::build(window, cx, |menu, window, cx| {
-            self.build_language_settings_menu(menu, cx)
+            self.build_language_settings_menu(menu, window, cx)
                 .separator()
                 .link(
                     "Go to Copilot Settings",
@@ -319,7 +320,7 @@ impl InlineCompletionButton {
 
     fn build_supermaven_context_menu(&self, cx: &mut ModelContext<Self>) -> Model<ContextMenu> {
         ContextMenu::build(window, cx, |menu, window, cx| {
-            self.build_language_settings_menu(menu, cx)
+            self.build_language_settings_menu(menu, window, cx)
                 .separator()
                 .action("Sign Out", supermaven::SignOut.boxed_clone())
         })

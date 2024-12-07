@@ -1,5 +1,5 @@
 use anyhow::Context as _;
-use gpui::{View, ModelContext, WindowContext};
+use gpui::{ModelContext, View, WindowContext};
 use language::Language;
 use url::Url;
 
@@ -89,6 +89,6 @@ pub fn apply_related_actions(editor: &Model<Editor>, window: &mut Window, cx: &m
         find_specific_language_server_in_selection(e, cx, is_c_language, CLANGD_SERVER_NAME)
             .is_some()
     }) {
-        register_action(editor, cx, switch_source_header);
+        register_action(editor, window, cx, switch_source_header);
     }
 }

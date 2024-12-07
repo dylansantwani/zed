@@ -86,7 +86,7 @@ impl ModalLayer {
                 return;
             }
         }
-        let new_modal = cx.new_model(build_view);
+        let new_modal = cx.new_model(|cx| build_view(window, cx));
         self.show_modal(new_modal, window, cx);
     }
 
@@ -98,7 +98,7 @@ impl ModalLayer {
     ) where
         V: ModalView,
     {
-        let focus_handle = cx.focus_handle();
+        let focus_handle = window.focus_handle();
         self.active_modal = Some(ActiveModal {
             modal: Box::new(new_modal.clone()),
             _subscriptions: [
@@ -115,7 +115,7 @@ impl ModalLayer {
             focus_handle,
         });
         cx.defer(move |_, cx| {
-            cx.focus_view(&new_modal);
+            window.focus_view(&new_modal, cx);
         });
         cx.notify();
     }
@@ -191,7 +191,7 @@ impl Render for ModalLayer {
                     .flex_col()
                     .items_center()
                     .track_focus(&active_modal.focus_handle)
-                    .child(h_flex().occlude().child(active_modal.modal.model())),
+                    .child(h_flex().occlude().child(active_modal.modal.view())),
             )
     }
 }

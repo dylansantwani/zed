@@ -61,12 +61,12 @@ impl OpenPathPrompt {
         tx: oneshot::Sender<Option<Vec<PathBuf>>>,
         cx: &mut ModelContext<Workspace>,
     ) {
-        workspace.toggle_modal(cx, |cx| {
+        workspace.toggle_modal(window, cx, |window, cx| {
             let delegate = OpenPathDelegate::new(tx, lister.clone());
 
             let picker = Picker::uniform_list(delegate, cx).width(rems(34.));
             let query = lister.default_query(cx);
-            picker.set_query(query, cx);
+            picker.set_query(query, window, cx);
             picker
         });
     }

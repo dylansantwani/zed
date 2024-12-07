@@ -236,7 +236,7 @@ pub async fn open_paths_with_positions(
             workspace
                 .update(cx, |_, cx| {
                     active_editor.update(cx, |editor, cx| {
-                        let snapshot = editor.snapshot(cx).display_snapshot;
+                        let snapshot = editor.snapshot(window, cx).display_snapshot;
                         let point = snapshot.buffer_snapshot.clip_point(point, Bias::Left);
                         editor.change_selections(Some(Autoscroll::center()), cx, |s| {
                             s.select_ranges([point..point])
@@ -340,7 +340,7 @@ async fn open_workspaces(
                     ..Default::default()
                 };
                 workspace::open_new(open_options, app_state, cx, |workspace, cx| {
-                    Editor::new_file(workspace, &Default::default(), cx)
+                    Editor::new_file(workspace, &Default::default(), window, cx)
                 })
                 .detach();
             })

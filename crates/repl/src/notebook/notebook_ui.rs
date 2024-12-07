@@ -108,7 +108,7 @@ impl NotebookEditor {
             cell_order.push(cell_id.clone());
             cell_map.insert(
                 cell_id.clone(),
-                Cell::load(cell, &languages, notebook_language.clone(), cx),
+                Cell::load(cell, &languages, notebook_language.clone(), window, cx),
             );
         }
 

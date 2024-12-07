@@ -1,5 +1,8 @@
 #![allow(unused, dead_code)]
-use gpui::{actions, hsla, AnyElement, AppContext, EventEmitter, FocusHandle, FocusableView, Hsla};
+use gpui::{
+    actions, hsla, AnyElement, AppContext, EventEmitter, FocusHandle, FocusableView, Hsla,
+    ModelContext,
+};
 use strum::IntoEnumIterator;
 use theme::all_theme_colors;
 use ui::{
@@ -14,10 +17,10 @@ use crate::{Item, Workspace};
 actions!(debug, [OpenThemePreview]);
 
 pub fn init(cx: &mut AppContext) {
-    cx.observe_new_views(|workspace: &mut Workspace, _| {
+    cx.observe_new_models(|workspace: &mut Workspace, _| {
         workspace.register_action(|workspace, _: &OpenThemePreview, cx| {
             let theme_preview = cx.new_view(ThemePreview::new);
-            workspace.add_item_to_active_pane(Box::new(theme_preview), None, true, cx)
+            workspace.add_item_to_active_pane(Box::new(theme_preview), None, true, window, cx)
         });
     })
     .detach();
@@ -46,22 +49,25 @@ struct ThemePreview {
 }
 
 impl ThemePreview {
-    pub fn new(cx: &mut ModelContext<Self>) -> Self {
+    pub fn new(window: &mut Window, cx: &mut ModelContext<Self>) -> Self {
         Self {
             current_page: ThemePreviewPage::Overview,
-            focus_handle: cx.focus_handle(),
+            focus_handle: window.focus_handle(),
         }
     }
 
     pub fn view(
         &self,
+        window: &mut Window,
         page: ThemePreviewPage,
         cx: &mut ModelContext<ThemePreview>,
     ) -> impl IntoElement {
         match page {
             ThemePreviewPage::Overview => self.render_overview_page(cx).into_any_element(),
             ThemePreviewPage::Typography => self.render_typography_page(cx).into_any_element(),
-            ThemePreviewPage::Components => self.render_components_page(cx).into_any_element(),
+            ThemePreviewPage::Components => {
+                self.render_components_page(window, cx).into_any_element()
+            }
         }
     }
 }
@@ -80,7 +86,7 @@ impl Item for ThemePreview {
 
     fn to_item_events(_: &Self::Event, _: impl FnMut(crate::item::ItemEvent)) {}
 
-    fn tab_content_text(&self, cx: &WindowContext) -> Option<SharedString> {
+    fn tab_content_text(&self, window: &Window, cx: &AppContext) -> Option<SharedString> {
         let name = cx.theme().name.clone();
         Some(format!("{} Preview", name).into())
     }
@@ -104,7 +110,7 @@ impl Item for ThemePreview {
 const AVATAR_URL: &str = "https://avatars.githubusercontent.com/u/1714999?v=4";
 
 impl ThemePreview {
-    fn preview_bg(cx: &WindowContext) -> Hsla {
+    fn preview_bg(cx: &AppContext) -> Hsla {
         cx.theme().colors().editor_background
     }
 
@@ -502,7 +508,11 @@ impl ThemePreview {
             )
     }
 
-    fn render_components_page(&self, cx: &ModelContext<Self>) -> impl IntoElement {
+    fn render_components_page(
+        &self,
+        window: &mut Window,
+        cx: &ModelContext<Self>,
+    ) -> impl IntoElement {
         let layer = ElevationIndex::Surface;
 
         v_flex()
@@ -520,8 +530,8 @@ impl ThemePreview {
             .child(Indicator::render_component_previews(window, cx))
             .child(Icon::render_component_previews(window, cx))
             .child(Table::render_component_previews(window, cx))
-            .child(self.render_avatars(window, cx))
-            .child(self.render_buttons(layer, window, cx))
+            .child(self.render_avatars(cx))
+            .child(self.render_buttons(layer, cx))
     }
 
     fn render_page_nav(&self, cx: &ModelContext<Self>) -> impl IntoElement {
@@ -533,7 +543,7 @@ impl ThemePreview {
             .bg(Self::preview_bg(cx))
             .children(ThemePreviewPage::iter().map(|p| {
                 Button::new(ElementId::Name(p.name().into()), p.name())
-                    .on_click(cx.listener(move |this, _, cx| {
+                    .on_click(cx.listener(move |this, _, window, cx| {
                         this.current_page = p;
                         cx.notify();
                     }))

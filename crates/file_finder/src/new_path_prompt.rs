@@ -221,7 +221,7 @@ impl NewPathPrompt {
         cx: &mut ModelContext<Workspace>,
     ) {
         let project = workspace.project().clone();
-        workspace.toggle_modal(cx, |cx| {
+        workspace.toggle_modal(window, cx, |window, cx| {
             let delegate = NewPathDelegate {
                 project,
                 tx: Some(tx),

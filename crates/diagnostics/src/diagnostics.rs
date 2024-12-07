@@ -239,13 +239,13 @@ impl ProjectDiagnosticsEditor {
 
     fn deploy(workspace: &mut Workspace, _: &Deploy, cx: &mut ModelContext<Workspace>) {
         if let Some(existing) = workspace.item_of_type::<ProjectDiagnosticsEditor>(cx) {
-            workspace.activate_item(&existing, true, true, cx);
+            workspace.activate_item(&existing, true, true, window, cx);
         } else {
             let workspace_handle = cx.handle().downgrade();
             let diagnostics = cx.new_model(|cx| {
                 ProjectDiagnosticsEditor::new(workspace.project().clone(), workspace_handle, cx)
             });
-            workspace.add_item_to_active_pane(Box::new(diagnostics), None, true, cx);
+            workspace.add_item_to_active_pane(Box::new(diagnostics), None, true, window, cx);
         }
     }
 
@@ -555,7 +555,7 @@ impl ProjectDiagnosticsEditor {
             }
 
             // If any selection has lost its position, move it to start of the next primary diagnostic.
-            let snapshot = editor.snapshot(cx);
+            let snapshot = editor.snapshot(window, cx);
             for selection in &mut selections {
                 if let Some(new_excerpt_id) = new_excerpt_ids_by_selection_id.get(&selection.id) {
                     let group_ix = match groups.binary_search_by(|probe| {
@@ -758,7 +758,7 @@ impl Item for ProjectDiagnosticsEditor {
     }
 
     fn reload(&mut self, project: Model<Project>, cx: &mut ModelContext<Self>) -> Task<Result<()>> {
-        self.editor.reload(project, cx)
+        self.editor.reload(project, window, cx)
     }
 
     fn act_as_type<'a>(

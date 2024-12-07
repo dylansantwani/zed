@@ -167,299 +167,304 @@ impl EditorElement {
             }
         });
 
-        crate::rust_analyzer_ext::apply_related_actions(view, cx);
-        crate::clangd_ext::apply_related_actions(view, cx);
-        register_action(view, cx, Editor::move_left);
-        register_action(view, cx, Editor::move_right);
-        register_action(view, cx, Editor::move_down);
-        register_action(view, cx, Editor::move_down_by_lines);
-        register_action(view, cx, Editor::select_down_by_lines);
-        register_action(view, cx, Editor::move_up);
-        register_action(view, cx, Editor::move_up_by_lines);
-        register_action(view, cx, Editor::select_up_by_lines);
-        register_action(view, cx, Editor::select_page_down);
-        register_action(view, cx, Editor::select_page_up);
-        register_action(view, cx, Editor::cancel);
-        register_action(view, cx, Editor::newline);
-        register_action(view, cx, Editor::newline_above);
-        register_action(view, cx, Editor::newline_below);
-        register_action(view, cx, Editor::backspace);
-        register_action(view, cx, Editor::delete);
-        register_action(view, cx, Editor::tab);
-        register_action(view, cx, Editor::tab_prev);
-        register_action(view, cx, Editor::indent);
-        register_action(view, cx, Editor::outdent);
-        register_action(view, cx, Editor::delete_line);
-        register_action(view, cx, Editor::join_lines);
-        register_action(view, cx, Editor::sort_lines_case_sensitive);
-        register_action(view, cx, Editor::sort_lines_case_insensitive);
-        register_action(view, cx, Editor::reverse_lines);
-        register_action(view, cx, Editor::shuffle_lines);
-        register_action(view, cx, Editor::convert_to_upper_case);
-        register_action(view, cx, Editor::convert_to_lower_case);
-        register_action(view, cx, Editor::convert_to_title_case);
-        register_action(view, cx, Editor::convert_to_snake_case);
-        register_action(view, cx, Editor::convert_to_kebab_case);
-        register_action(view, cx, Editor::convert_to_upper_camel_case);
-        register_action(view, cx, Editor::convert_to_lower_camel_case);
-        register_action(view, cx, Editor::convert_to_opposite_case);
-        register_action(view, cx, Editor::delete_to_previous_word_start);
-        register_action(view, cx, Editor::delete_to_previous_subword_start);
-        register_action(view, cx, Editor::delete_to_next_word_end);
-        register_action(view, cx, Editor::delete_to_next_subword_end);
-        register_action(view, cx, Editor::delete_to_beginning_of_line);
-        register_action(view, cx, Editor::delete_to_end_of_line);
-        register_action(view, cx, Editor::cut_to_end_of_line);
-        register_action(view, cx, Editor::duplicate_line_up);
-        register_action(view, cx, Editor::duplicate_line_down);
-        register_action(view, cx, Editor::move_line_up);
-        register_action(view, cx, Editor::move_line_down);
-        register_action(view, cx, Editor::transpose);
-        register_action(view, cx, Editor::rewrap);
-        register_action(view, cx, Editor::cut);
-        register_action(view, cx, Editor::kill_ring_cut);
-        register_action(view, cx, Editor::kill_ring_yank);
-        register_action(view, cx, Editor::copy);
-        register_action(view, cx, Editor::paste);
-        register_action(view, cx, Editor::undo);
-        register_action(view, cx, Editor::redo);
-        register_action(view, cx, Editor::move_page_up);
-        register_action(view, cx, Editor::move_page_down);
-        register_action(view, cx, Editor::next_screen);
-        register_action(view, cx, Editor::scroll_cursor_top);
-        register_action(view, cx, Editor::scroll_cursor_center);
-        register_action(view, cx, Editor::scroll_cursor_bottom);
-        register_action(view, cx, Editor::scroll_cursor_center_top_bottom);
-        register_action(view, cx, |editor, _: &LineDown, cx| {
+        crate::rust_analyzer_ext::apply_related_actions(view, window, cx);
+        crate::clangd_ext::apply_related_actions(view, window, cx);
+        register_action(view, window, cx, Editor::move_left);
+        register_action(view, window, cx, Editor::move_right);
+        register_action(view, window, cx, Editor::move_down);
+        register_action(view, window, cx, Editor::move_down_by_lines);
+        register_action(view, window, cx, Editor::select_down_by_lines);
+        register_action(view, window, cx, Editor::move_up);
+        register_action(view, window, cx, Editor::move_up_by_lines);
+        register_action(view, window, cx, Editor::select_up_by_lines);
+        register_action(view, window, cx, Editor::select_page_down);
+        register_action(view, window, cx, Editor::select_page_up);
+        register_action(view, window, cx, Editor::cancel);
+        register_action(view, window, cx, Editor::newline);
+        register_action(view, window, cx, Editor::newline_above);
+        register_action(view, window, cx, Editor::newline_below);
+        register_action(view, window, cx, Editor::backspace);
+        register_action(view, window, cx, Editor::delete);
+        register_action(view, window, cx, Editor::tab);
+        register_action(view, window, cx, Editor::tab_prev);
+        register_action(view, window, cx, Editor::indent);
+        register_action(view, window, cx, Editor::outdent);
+        register_action(view, window, cx, Editor::delete_line);
+        register_action(view, window, cx, Editor::join_lines);
+        register_action(view, window, cx, Editor::sort_lines_case_sensitive);
+        register_action(view, window, cx, Editor::sort_lines_case_insensitive);
+        register_action(view, window, cx, Editor::reverse_lines);
+        register_action(view, window, cx, Editor::shuffle_lines);
+        register_action(view, window, cx, Editor::convert_to_upper_case);
+        register_action(view, window, cx, Editor::convert_to_lower_case);
+        register_action(view, window, cx, Editor::convert_to_title_case);
+        register_action(view, window, cx, Editor::convert_to_snake_case);
+        register_action(view, window, cx, Editor::convert_to_kebab_case);
+        register_action(view, window, cx, Editor::convert_to_upper_camel_case);
+        register_action(view, window, cx, Editor::convert_to_lower_camel_case);
+        register_action(view, window, cx, Editor::convert_to_opposite_case);
+        register_action(view, window, cx, Editor::delete_to_previous_word_start);
+        register_action(view, window, cx, Editor::delete_to_previous_subword_start);
+        register_action(view, window, cx, Editor::delete_to_next_word_end);
+        register_action(view, window, cx, Editor::delete_to_next_subword_end);
+        register_action(view, window, cx, Editor::delete_to_beginning_of_line);
+        register_action(view, window, cx, Editor::delete_to_end_of_line);
+        register_action(view, window, cx, Editor::cut_to_end_of_line);
+        register_action(view, window, cx, Editor::duplicate_line_up);
+        register_action(view, window, cx, Editor::duplicate_line_down);
+        register_action(view, window, cx, Editor::move_line_up);
+        register_action(view, window, cx, Editor::move_line_down);
+        register_action(view, window, cx, Editor::transpose);
+        register_action(view, window, cx, Editor::rewrap);
+        register_action(view, window, cx, Editor::cut);
+        register_action(view, window, cx, Editor::kill_ring_cut);
+        register_action(view, window, cx, Editor::kill_ring_yank);
+        register_action(view, window, cx, Editor::copy);
+        register_action(view, window, cx, Editor::paste);
+        register_action(view, window, cx, Editor::undo);
+        register_action(view, window, cx, Editor::redo);
+        register_action(view, window, cx, Editor::move_page_up);
+        register_action(view, window, cx, Editor::move_page_down);
+        register_action(view, window, cx, Editor::next_screen);
+        register_action(view, window, cx, Editor::scroll_cursor_top);
+        register_action(view, window, cx, Editor::scroll_cursor_center);
+        register_action(view, window, cx, Editor::scroll_cursor_bottom);
+        register_action(view, window, cx, Editor::scroll_cursor_center_top_bottom);
+        register_action(view, window, cx, |editor, _: &LineDown, cx| {
             editor.scroll_screen(&ScrollAmount::Line(1.), cx)
         });
-        register_action(view, cx, |editor, _: &LineUp, cx| {
+        register_action(view, window, cx, |editor, _: &LineUp, cx| {
             editor.scroll_screen(&ScrollAmount::Line(-1.), cx)
         });
-        register_action(view, cx, |editor, _: &HalfPageDown, cx| {
+        register_action(view, window, cx, |editor, _: &HalfPageDown, cx| {
             editor.scroll_screen(&ScrollAmount::Page(0.5), cx)
         });
-        register_action(view, cx, |editor, HandleInput(text): &HandleInput, cx| {
-            if text.is_empty() {
-                return;
-            }
-            editor.handle_input(text, cx);
-        });
-        register_action(view, cx, |editor, _: &HalfPageUp, cx| {
+        register_action(
+            view,
+            window,
+            cx,
+            |editor, HandleInput(text): &HandleInput, cx| {
+                if text.is_empty() {
+                    return;
+                }
+                editor.handle_input(text, cx);
+            },
+        );
+        register_action(view, window, cx, |editor, _: &HalfPageUp, cx| {
             editor.scroll_screen(&ScrollAmount::Page(-0.5), cx)
         });
-        register_action(view, cx, |editor, _: &PageDown, cx| {
+        register_action(view, window, cx, |editor, _: &PageDown, cx| {
             editor.scroll_screen(&ScrollAmount::Page(1.), cx)
         });
-        register_action(view, cx, |editor, _: &PageUp, cx| {
+        register_action(view, window, cx, |editor, _: &PageUp, cx| {
             editor.scroll_screen(&ScrollAmount::Page(-1.), cx)
         });
-        register_action(view, cx, Editor::move_to_previous_word_start);
-        register_action(view, cx, Editor::move_to_previous_subword_start);
-        register_action(view, cx, Editor::move_to_next_word_end);
-        register_action(view, cx, Editor::move_to_next_subword_end);
-        register_action(view, cx, Editor::move_to_beginning_of_line);
-        register_action(view, cx, Editor::move_to_end_of_line);
-        register_action(view, cx, Editor::move_to_start_of_paragraph);
-        register_action(view, cx, Editor::move_to_end_of_paragraph);
-        register_action(view, cx, Editor::move_to_beginning);
-        register_action(view, cx, Editor::move_to_end);
-        register_action(view, cx, Editor::select_up);
-        register_action(view, cx, Editor::select_down);
-        register_action(view, cx, Editor::select_left);
-        register_action(view, cx, Editor::select_right);
-        register_action(view, cx, Editor::select_to_previous_word_start);
-        register_action(view, cx, Editor::select_to_previous_subword_start);
-        register_action(view, cx, Editor::select_to_next_word_end);
-        register_action(view, cx, Editor::select_to_next_subword_end);
-        register_action(view, cx, Editor::select_to_beginning_of_line);
-        register_action(view, cx, Editor::select_to_end_of_line);
-        register_action(view, cx, Editor::select_to_start_of_paragraph);
-        register_action(view, cx, Editor::select_to_end_of_paragraph);
-        register_action(view, cx, Editor::select_to_beginning);
-        register_action(view, cx, Editor::select_to_end);
-        register_action(view, cx, Editor::select_all);
-        register_action(view, cx, |editor, action, cx| {
+        register_action(view, window, cx, Editor::move_to_previous_word_start);
+        register_action(view, window, cx, Editor::move_to_previous_subword_start);
+        register_action(view, window, cx, Editor::move_to_next_word_end);
+        register_action(view, window, cx, Editor::move_to_next_subword_end);
+        register_action(view, window, cx, Editor::move_to_beginning_of_line);
+        register_action(view, window, cx, Editor::move_to_end_of_line);
+        register_action(view, window, cx, Editor::move_to_start_of_paragraph);
+        register_action(view, window, cx, Editor::move_to_end_of_paragraph);
+        register_action(view, window, cx, Editor::move_to_beginning);
+        register_action(view, window, cx, Editor::move_to_end);
+        register_action(view, window, cx, Editor::select_up);
+        register_action(view, window, cx, Editor::select_down);
+        register_action(view, window, cx, Editor::select_left);
+        register_action(view, window, cx, Editor::select_right);
+        register_action(view, window, cx, Editor::select_to_previous_word_start);
+        register_action(view, window, cx, Editor::select_to_previous_subword_start);
+        register_action(view, window, cx, Editor::select_to_next_word_end);
+        register_action(view, window, cx, Editor::select_to_next_subword_end);
+        register_action(view, window, cx, Editor::select_to_beginning_of_line);
+        register_action(view, window, cx, Editor::select_to_end_of_line);
+        register_action(view, window, cx, Editor::select_to_start_of_paragraph);
+        register_action(view, window, cx, Editor::select_to_end_of_paragraph);
+        register_action(view, window, cx, Editor::select_to_beginning);
+        register_action(view, window, cx, Editor::select_to_end);
+        register_action(view, window, cx, Editor::select_all);
+        register_action(view, window, cx, |editor, action, cx| {
             editor.select_all_matches(action, cx).log_err();
         });
-        register_action(view, cx, Editor::select_line);
-        register_action(view, cx, Editor::split_selection_into_lines);
-        register_action(view, cx, Editor::add_selection_above);
-        register_action(view, cx, Editor::add_selection_below);
-        register_action(view, cx, |editor, action, cx| {
+        register_action(view, window, cx, Editor::select_line);
+        register_action(view, window, cx, Editor::split_selection_into_lines);
+        register_action(view, window, cx, Editor::add_selection_above);
+        register_action(view, window, cx, Editor::add_selection_below);
+        register_action(view, window, cx, |editor, action, cx| {
             editor.select_next(action, cx).log_err();
         });
-        register_action(view, cx, |editor, action, cx| {
+        register_action(view, window, cx, |editor, action, cx| {
             editor.select_previous(action, cx).log_err();
         });
-        register_action(view, cx, Editor::toggle_comments);
-        register_action(view, cx, Editor::select_larger_syntax_node);
-        register_action(view, cx, Editor::select_smaller_syntax_node);
-        register_action(view, cx, Editor::select_enclosing_symbol);
-        register_action(view, cx, Editor::move_to_enclosing_bracket);
-        register_action(view, cx, Editor::undo_selection);
-        register_action(view, cx, Editor::redo_selection);
+        register_action(view, window, cx, Editor::toggle_comments);
+        register_action(view, window, cx, Editor::select_larger_syntax_node);
+        register_action(view, window, cx, Editor::select_smaller_syntax_node);
+        register_action(view, window, cx, Editor::select_enclosing_symbol);
+        register_action(view, window, cx, Editor::move_to_enclosing_bracket);
+        register_action(view, window, cx, Editor::undo_selection);
+        register_action(view, window, cx, Editor::redo_selection);
         if !view.read(cx).is_singleton(cx) {
-            register_action(view, cx, Editor::expand_excerpts);
-            register_action(view, cx, Editor::expand_excerpts_up);
-            register_action(view, cx, Editor::expand_excerpts_down);
+            register_action(view, window, cx, Editor::expand_excerpts);
+            register_action(view, window, cx, Editor::expand_excerpts_up);
+            register_action(view, window, cx, Editor::expand_excerpts_down);
         }
-        register_action(view, cx, Editor::go_to_diagnostic);
-        register_action(view, cx, Editor::go_to_prev_diagnostic);
-        register_action(view, cx, Editor::go_to_next_hunk);
-        register_action(view, cx, Editor::go_to_prev_hunk);
-        register_action(view, cx, |editor, a, window, cx| {
+        register_action(view, window, cx, Editor::go_to_diagnostic);
+        register_action(view, window, cx, Editor::go_to_prev_diagnostic);
+        register_action(view, window, cx, Editor::go_to_next_hunk);
+        register_action(view, window, cx, Editor::go_to_prev_hunk);
+        register_action(view, window, cx, |editor, a, window, cx| {
             editor.go_to_definition(a, cx).detach_and_log_err(cx);
         });
-        register_action(view, cx, |editor, a, window, cx| {
+        register_action(view, window, cx, |editor, a, window, cx| {
             editor.go_to_definition_split(a, cx).detach_and_log_err(cx);
         });
-        register_action(view, cx, |editor, a, window, cx| {
+        register_action(view, window, cx, |editor, a, window, cx| {
             editor.go_to_declaration(a, cx).detach_and_log_err(cx);
         });
-        register_action(view, cx, |editor, a, window, cx| {
+        register_action(view, window, cx, |editor, a, window, cx| {
             editor.go_to_declaration_split(a, cx).detach_and_log_err(cx);
         });
-        register_action(view, cx, |editor, a, window, cx| {
+        register_action(view, window, cx, |editor, a, window, cx| {
             editor.go_to_implementation(a, cx).detach_and_log_err(cx);
         });
-        register_action(view, cx, |editor, a, window, cx| {
+        register_action(view, window, cx, |editor, a, window, cx| {
             editor
                 .go_to_implementation_split(a, cx)
                 .detach_and_log_err(cx);
         });
-        register_action(view, cx, |editor, a, window, cx| {
+        register_action(view, window, cx, |editor, a, window, cx| {
             editor.go_to_type_definition(a, cx).detach_and_log_err(cx);
         });
-        register_action(view, cx, |editor, a, window, cx| {
+        register_action(view, window, cx, |editor, a, window, cx| {
             editor
                 .go_to_type_definition_split(a, cx)
                 .detach_and_log_err(cx);
         });
-        register_action(view, cx, Editor::open_url);
-        register_action(view, cx, Editor::open_file);
-        register_action(view, cx, Editor::fold);
-        register_action(view, cx, Editor::fold_at_level);
-        register_action(view, cx, Editor::fold_all);
-        register_action(view, cx, Editor::fold_at);
-        register_action(view, cx, Editor::fold_recursive);
-        register_action(view, cx, Editor::toggle_fold);
-        register_action(view, cx, Editor::toggle_fold_recursive);
-        register_action(view, cx, Editor::unfold_lines);
-        register_action(view, cx, Editor::unfold_recursive);
-        register_action(view, cx, Editor::unfold_all);
-        register_action(view, cx, Editor::unfold_at);
-        register_action(view, cx, Editor::fold_selected_ranges);
-        register_action(view, cx, Editor::show_completions);
-        register_action(view, cx, Editor::toggle_code_actions);
-        register_action(view, cx, Editor::open_excerpts);
-        register_action(view, cx, Editor::open_excerpts_in_split);
-        register_action(view, cx, Editor::open_proposed_changes_editor);
-        register_action(view, cx, Editor::toggle_soft_wrap);
-        register_action(view, cx, Editor::toggle_tab_bar);
-        register_action(view, cx, Editor::toggle_line_numbers);
-        register_action(view, cx, Editor::toggle_relative_line_numbers);
-        register_action(view, cx, Editor::toggle_indent_guides);
-        register_action(view, cx, Editor::toggle_inlay_hints);
-        register_action(view, cx, Editor::toggle_inline_completions);
-        register_action(view, cx, hover_popover::hover);
-        register_action(view, cx, Editor::reveal_in_finder);
-        register_action(view, cx, Editor::copy_path);
-        register_action(view, cx, Editor::copy_relative_path);
-        register_action(view, cx, Editor::copy_highlight_json);
-        register_action(view, cx, Editor::copy_permalink_to_line);
-        register_action(view, cx, Editor::open_permalink_to_line);
-        register_action(view, cx, Editor::copy_file_location);
-        register_action(view, cx, Editor::toggle_git_blame);
-        register_action(view, cx, Editor::toggle_git_blame_inline);
-        register_action(view, cx, Editor::toggle_hunk_diff);
-        register_action(view, cx, Editor::expand_all_hunk_diffs);
-        register_action(view, cx, |editor, action, window, cx| {
+        register_action(view, window, cx, Editor::open_url);
+        register_action(view, window, cx, Editor::open_file);
+        register_action(view, window, cx, Editor::fold);
+        register_action(view, window, cx, Editor::fold_at_level);
+        register_action(view, window, cx, Editor::fold_all);
+        register_action(view, window, cx, Editor::fold_at);
+        register_action(view, window, cx, Editor::fold_recursive);
+        register_action(view, window, cx, Editor::toggle_fold);
+        register_action(view, window, cx, Editor::toggle_fold_recursive);
+        register_action(view, window, cx, Editor::unfold_lines);
+        register_action(view, window, cx, Editor::unfold_recursive);
+        register_action(view, window, cx, Editor::unfold_all);
+        register_action(view, window, cx, Editor::unfold_at);
+        register_action(view, window, cx, Editor::fold_selected_ranges);
+        register_action(view, window, cx, Editor::show_completions);
+        register_action(view, window, cx, Editor::toggle_code_actions);
+        register_action(view, window, cx, Editor::open_excerpts);
+        register_action(view, window, cx, Editor::open_excerpts_in_split);
+        register_action(view, window, cx, Editor::open_proposed_changes_editor);
+        register_action(view, window, cx, Editor::toggle_soft_wrap);
+        register_action(view, window, cx, Editor::toggle_tab_bar);
+        register_action(view, window, cx, Editor::toggle_line_numbers);
+        register_action(view, window, cx, Editor::toggle_relative_line_numbers);
+        register_action(view, window, cx, Editor::toggle_indent_guides);
+        register_action(view, window, cx, Editor::toggle_inlay_hints);
+        register_action(view, window, cx, Editor::toggle_inline_completions);
+        register_action(view, window, cx, hover_popover::hover);
+        register_action(view, window, cx, Editor::reveal_in_finder);
+        register_action(view, window, cx, Editor::copy_path);
+        register_action(view, window, cx, Editor::copy_relative_path);
+        register_action(view, window, cx, Editor::copy_highlight_json);
+        register_action(view, window, cx, Editor::copy_permalink_to_line);
+        register_action(view, window, cx, Editor::open_permalink_to_line);
+        register_action(view, window, cx, Editor::copy_file_location);
+        register_action(view, window, cx, Editor::toggle_git_blame);
+        register_action(view, window, cx, Editor::toggle_git_blame_inline);
+        register_action(view, window, cx, Editor::toggle_hunk_diff);
+        register_action(view, window, cx, Editor::expand_all_hunk_diffs);
+        register_action(view, window, cx, |editor, action, window, cx| {
             if let Some(task) = editor.format(action, cx) {
                 task.detach_and_log_err(cx);
             } else {
                 cx.propagate();
             }
         });
-        register_action(view, cx, |editor, action, window, cx| {
+        register_action(view, window, cx, |editor, action, window, cx| {
             if let Some(task) = editor.format_selections(action, cx) {
                 task.detach_and_log_err(cx);
             } else {
                 cx.propagate();
             }
         });
-        register_action(view, cx, Editor::restart_language_server);
-        register_action(view, cx, Editor::cancel_language_server_work);
-        register_action(view, cx, Editor::show_character_palette);
-        register_action(view, cx, |editor, action, window, cx| {
+        register_action(view, window, cx, Editor::restart_language_server);
+        register_action(view, window, cx, Editor::cancel_language_server_work);
+        register_action(view, window, cx, Editor::show_character_palette);
+        register_action(view, window, cx, |editor, action, window, cx| {
             if let Some(task) = editor.confirm_completion(action, cx) {
                 task.detach_and_log_err(cx);
             } else {
                 cx.propagate();
             }
         });
-        register_action(view, cx, |editor, action, window, cx| {
+        register_action(view, window, cx, |editor, action, window, cx| {
             if let Some(task) = editor.compose_completion(action, cx) {
                 task.detach_and_log_err(cx);
             } else {
                 cx.propagate();
             }
         });
-        register_action(view, cx, |editor, action, window, cx| {
+        register_action(view, window, cx, |editor, action, window, cx| {
             if let Some(task) = editor.confirm_code_action(action, cx) {
                 task.detach_and_log_err(cx);
             } else {
                 cx.propagate();
             }
         });
-        register_action(view, cx, |editor, action, window, cx| {
+        register_action(view, window, cx, |editor, action, window, cx| {
             if let Some(task) = editor.rename(action, cx) {
                 task.detach_and_log_err(cx);
             } else {
                 cx.propagate();
             }
         });
-        register_action(view, cx, |editor, action, window, cx| {
+        register_action(view, window, cx, |editor, action, window, cx| {
             if let Some(task) = editor.confirm_rename(action, cx) {
                 task.detach_and_log_err(cx);
             } else {
                 cx.propagate();
             }
         });
-        register_action(view, cx, |editor, action, window, cx| {
+        register_action(view, window, cx, |editor, action, window, cx| {
             if let Some(task) = editor.find_all_references(action, cx) {
                 task.detach_and_log_err(cx);
             } else {
                 cx.propagate();
             }
         });
-        register_action(view, cx, Editor::show_signature_help);
-        register_action(view, cx, Editor::next_inline_completion);
-        register_action(view, cx, Editor::previous_inline_completion);
-        register_action(view, cx, Editor::show_inline_completion);
-        register_action(view, cx, Editor::context_menu_first);
-        register_action(view, cx, Editor::context_menu_prev);
-        register_action(view, cx, Editor::context_menu_next);
-        register_action(view, cx, Editor::context_menu_last);
-        register_action(view, cx, Editor::display_cursor_names);
-        register_action(view, cx, Editor::unique_lines_case_insensitive);
-        register_action(view, cx, Editor::unique_lines_case_sensitive);
-        register_action(view, cx, Editor::accept_partial_inline_completion);
-        register_action(view, cx, Editor::accept_inline_completion);
-        register_action(view, cx, Editor::revert_file);
-        register_action(view, cx, Editor::revert_selected_hunks);
-        register_action(view, cx, Editor::apply_all_diff_hunks);
-        register_action(view, cx, Editor::apply_selected_diff_hunks);
-        register_action(view, cx, Editor::open_active_item_in_terminal);
-        register_action(view, cx, Editor::reload_file);
-        register_action(view, cx, Editor::spawn_nearest_task);
+        register_action(view, window, cx, Editor::show_signature_help);
+        register_action(view, window, cx, Editor::next_inline_completion);
+        register_action(view, window, cx, Editor::previous_inline_completion);
+        register_action(view, window, cx, Editor::show_inline_completion);
+        register_action(view, window, cx, Editor::context_menu_first);
+        register_action(view, window, cx, Editor::context_menu_prev);
+        register_action(view, window, cx, Editor::context_menu_next);
+        register_action(view, window, cx, Editor::context_menu_last);
+        register_action(view, window, cx, Editor::display_cursor_names);
+        register_action(view, window, cx, Editor::unique_lines_case_insensitive);
+        register_action(view, window, cx, Editor::unique_lines_case_sensitive);
+        register_action(view, window, cx, Editor::accept_partial_inline_completion);
+        register_action(view, window, cx, Editor::accept_inline_completion);
+        register_action(view, window, cx, Editor::revert_file);
+        register_action(view, window, cx, Editor::revert_selected_hunks);
+        register_action(view, window, cx, Editor::apply_all_diff_hunks);
+        register_action(view, window, cx, Editor::apply_selected_diff_hunks);
+        register_action(view, window, cx, Editor::open_active_item_in_terminal);
+        register_action(view, window, cx, Editor::reload_file);
+        register_action(view, window, cx, Editor::spawn_nearest_task);
     }
 
     fn register_key_listeners(
         &self,
+        layout: &EditorLayout,
         window: &mut Window,
         cx: &mut AppContext,
-        layout: &EditorLayout,
     ) {
         let position_map = layout.position_map.clone();
         cx.on_key_event({
@@ -1145,7 +1150,7 @@ impl EditorElement {
                         color: self.style.background,
                         is_top_row: cursor_position.row().0 == 0,
                     });
-                    cursor.layout(content_origin, cursor_name, cx);
+                    cursor.layout(content_origin, cursor_name, window, cx);
                     cursors.push(cursor);
                 }
             }
@@ -1461,7 +1466,7 @@ impl EditorElement {
                 .flatten()?;
 
             let mut element =
-                render_inline_blame_entry(&blame, blame_entry, &self.style, workspace, cx);
+                render_inline_blame_entry(&blame, blame_entry, &self.style, workspace, window, cx);
 
             let start_y = content_origin.y
                 + line_height * (display_row.as_f32() - scroll_pixel_position.y / line_height);
@@ -1551,6 +1556,7 @@ impl EditorElement {
                         &self.style,
                         &mut last_used_color,
                         self.editor.clone(),
+                        window,
                         cx,
                     );
 
@@ -1759,6 +1765,7 @@ impl EditorElement {
                         scroll_pixel_position,
                         gutter_hitbox,
                         rows_with_hunk_bounds,
+                        window,
                         cx,
                     );
                     Some(button)
@@ -1801,6 +1808,7 @@ impl EditorElement {
             scroll_pixel_position,
             gutter_hitbox,
             rows_with_hunk_bounds,
+            window,
             cx,
         );
 
@@ -1969,6 +1977,7 @@ impl EditorElement {
                             multibuffer_row,
                             active,
                             self.editor.clone(),
+                            window,
                             cx,
                         )
                     } else {
@@ -1992,7 +2001,7 @@ impl EditorElement {
             .into_iter()
             .map(|row| {
                 if let Some(multibuffer_row) = row {
-                    snapshot.render_crease_trailer(multibuffer_row, cx)
+                    snapshot.render_crease_trailer(multibuffer_row, window, cx)
                 } else {
                     None
                 }
@@ -2058,6 +2067,7 @@ impl EditorElement {
                 snapshot.mode,
                 editor_width,
                 is_row_soft_wrapped,
+                window,
                 cx,
             )
         }
@@ -2082,6 +2092,7 @@ impl EditorElement {
                 row,
                 content_origin,
                 &mut line_elements,
+                window,
                 cx,
             );
         }
@@ -2127,6 +2138,7 @@ impl EditorElement {
                             &self.style,
                             editor_width,
                             is_row_soft_wrapped,
+                            window,
                             cx,
                         )
                         .x_for_index(align_to.column() as usize)
@@ -2187,6 +2199,7 @@ impl EditorElement {
                                     prev_excerpt.id,
                                     ExpandExcerptDirection::Down,
                                     IconName::ArrowDownFromLine,
+                                    window,
                                     cx,
                                 )),
                         );
@@ -2319,6 +2332,7 @@ impl EditorElement {
                                         next_excerpt.id,
                                         ExpandExcerptDirection::Up,
                                         IconName::ArrowUpFromLine,
+                                        window,
                                         cx,
                                     )),
                             );
@@ -2403,6 +2417,7 @@ impl EditorElement {
                                                 next_excerpt.id,
                                                 ExpandExcerptDirection::Up,
                                                 IconName::ArrowUpFromLine,
+                                                window,
                                                 cx,
                                             )
                                         } else {
@@ -2545,6 +2560,7 @@ impl EditorElement {
                 &mut resized_blocks,
                 selections,
                 is_row_soft_wrapped,
+                window,
                 cx,
             );
             fixed_block_max_width = fixed_block_max_width.max(element_size.width + em_width);
@@ -2591,6 +2607,7 @@ impl EditorElement {
                 &mut resized_blocks,
                 selections,
                 is_row_soft_wrapped,
+                window,
                 cx,
             );
 
@@ -2638,6 +2655,7 @@ impl EditorElement {
                             &mut resized_blocks,
                             selections,
                             is_row_soft_wrapped,
+                            window,
                             cx,
                         );
 
@@ -2936,7 +2954,7 @@ impl EditorElement {
                 cx.defer_draw(popover.element, popover_origin, 2);
                 if position != itertools::Position::Last {
                     let origin = point(popover_origin.x, popover_origin.y - HOVER_POPOVER_GAP);
-                    draw_occluder(size.width, origin, cx);
+                    draw_occluder(size.width, origin, window, cx);
                 }
 
                 current_y = popover_origin.y - HOVER_POPOVER_GAP;
@@ -2951,7 +2969,7 @@ impl EditorElement {
                 cx.defer_draw(popover.element, popover_origin, 2);
                 if position != itertools::Position::Last {
                     let origin = point(popover_origin.x, popover_origin.y + size.height);
-                    draw_occluder(size.width, origin, cx);
+                    draw_occluder(size.width, origin, window, cx);
                 }
 
                 current_y = popover_origin.y + size.height + HOVER_POPOVER_GAP;
@@ -3464,7 +3482,7 @@ impl EditorElement {
                 )
             });
         if show_git_gutter {
-            Self::paint_diff_hunks(layout, cx)
+            Self::paint_diff_hunks(layout, window, cx)
         }
 
         let highlight_width = 0.275 * layout.position_map.line_height;
@@ -3533,11 +3551,11 @@ impl EditorElement {
                 };
                 cx.set_cursor_style(cursor_style, &layout.text_hitbox);
 
-                let invisible_display_ranges = self.paint_highlights(layout, cx);
-                self.paint_lines(&invisible_display_ranges, layout, cx);
-                self.paint_redactions(layout, cx);
-                self.paint_cursors(layout, cx);
-                self.paint_active_line_trailer(layout, cx);
+                let invisible_display_ranges = self.paint_highlights(layout, window, cx);
+                self.paint_lines(&invisible_display_ranges, layout, window, cx);
+                self.paint_redactions(layout, window, cx);
+                self.paint_cursors(layout, window, cx);
+                self.paint_active_line_trailer(layout, window, cx);
                 cx.with_element_namespace("crease_trailers", |cx| {
                     for trailer in layout.crease_trailers.iter_mut().flatten() {
                         trailer.element.paint(window, cx);
@@ -3563,6 +3581,7 @@ impl EditorElement {
                     Pixels::ZERO,
                     line_end_overshoot,
                     layout,
+                    window,
                     cx,
                 );
             }
@@ -3577,6 +3596,7 @@ impl EditorElement {
                         corner_radius,
                         corner_radius * 2.,
                         layout,
+                        window,
                         cx,
                     );
 
@@ -3612,6 +3632,7 @@ impl EditorElement {
                 layout.content_origin,
                 whitespace_setting,
                 invisible_display_ranges,
+                window,
                 cx,
             )
         }
@@ -3644,6 +3665,7 @@ impl EditorElement {
                     Pixels::ZERO,
                     line_end_overshoot,
                     layout,
+                    window,
                     cx,
                 );
             }
@@ -3657,7 +3679,7 @@ impl EditorElement {
         cx: &mut AppContext,
     ) {
         for cursor in &mut layout.visible_cursors {
-            cursor.paint(layout.content_origin, cx);
+            cursor.paint(layout.content_origin, window, cx);
         }
     }
 
@@ -3688,11 +3710,16 @@ impl EditorElement {
                 ));
 
                 let fast_markers =
-                    self.collect_fast_scrollbar_markers(layout, scrollbar_layout, cx);
+                    self.collect_fast_scrollbar_markers(layout, scrollbar_layout, window, cx);
                 // Refresh slow scrollbar markers in the background. Below, we paint whatever markers have already been computed.
-                self.refresh_slow_scrollbar_markers(layout, scrollbar_layout, cx);
+                self.refresh_slow_scrollbar_markers(layout, scrollbar_layout, window, cx);
 
-                let markers = self.editor.read(cx).scrollbar_marker_state.markers.clone();
+                let markers = self
+                    .editor
+                    .read(window, cx)
+                    .scrollbar_marker_state
+                    .markers
+                    .clone();
                 for marker in markers.iter().chain(&fast_markers) {
                     let mut marker = marker.clone();
                     marker.bounds.origin += scrollbar_layout.hitbox.origin;
@@ -4035,7 +4062,7 @@ impl EditorElement {
                     .collect(),
             };
 
-            highlighted_range.paint(layout.text_hitbox.bounds, cx);
+            highlighted_range.paint(layout.text_hitbox.bounds, window, cx);
         }
     }
 
@@ -4149,7 +4176,7 @@ impl EditorElement {
         window: &mut Window,
         cx: &mut AppContext,
     ) {
-        self.paint_scroll_wheel_listener(layout, cx);
+        self.paint_scroll_wheel_listener(layout, window, cx);
 
         window.on_mouse_event({
             let position_map = layout.position_map.clone();
@@ -4420,6 +4447,7 @@ fn render_blame_entry(
                     details.as_ref(),
                     editor.clone(),
                     event.position,
+                    window,
                     cx,
                 );
             }
@@ -4576,6 +4604,7 @@ impl LineWithInvisibles {
                         let line_height = text_style.line_height_in_pixels(cx.rem_size());
                         let size = element.layout_as_root(
                             size(available_width, AvailableSpace::Definite(line_height)),
+                            window,
                             cx,
                         );
 
@@ -4777,6 +4806,7 @@ impl LineWithInvisibles {
             row,
             line_height,
             whitespace_setting,
+            window,
             cx,
         );
     }
@@ -4827,7 +4857,7 @@ impl LineWithInvisibles {
         let invisible_iter = self.invisibles.iter().map(extract_whitespace_info);
         match whitespace_setting {
             ShowWhitespaceSetting::None => (),
-            ShowWhitespaceSetting::All => invisible_iter.for_each(|(_, paint)| paint(cx)),
+            ShowWhitespaceSetting::All => invisible_iter.for_each(|(_, paint)| paint(window, cx)),
             ShowWhitespaceSetting::Selection => invisible_iter.for_each(|([start, _], paint)| {
                 let invisible_point = DisplayPoint::new(row, start as u32);
                 if !selection_ranges
@@ -4837,7 +4867,7 @@ impl LineWithInvisibles {
                     return;
                 }
 
-                paint(cx);
+                paint(window, cx);
             }),
 
             // For a whitespace to be on a boundary, any of the following conditions need to be met:
@@ -4859,7 +4889,7 @@ impl LineWithInvisibles {
                     };
 
                     if should_render || start == 0 || end == self.len {
-                        paint(cx);
+                        paint(window, cx);
 
                         // Since we are scanning from the left, we will skip over the first available whitespace that is part
                         // of a boundary between non-whitespace segments, so we correct by manually redrawing it if needed.
@@ -4876,7 +4906,7 @@ impl LineWithInvisibles {
                     if selection_ranges.iter().any(|region| {
                         region.start <= invisible_point && invisible_point < region.end
                     }) {
-                        paint(cx);
+                        paint(window, cx);
                     }
 
                     last_seen = Some((should_render, end, paint));
@@ -5061,6 +5091,7 @@ impl Element for EditorElement {
                                     &style,
                                     px(f32::MAX),
                                     |_| false, // Single lines never soft wrap
+                                    window,
                                     cx,
                                 )
                                 .pop()
@@ -5325,6 +5356,7 @@ impl Element for EditorElement {
                         &snapshot,
                         start_row,
                         end_row,
+                        window,
                         cx,
                     );
 
@@ -5334,6 +5366,7 @@ impl Element for EditorElement {
                         &active_rows,
                         newest_selection_head,
                         &snapshot,
+                        window,
                         cx,
                     );
 
@@ -5343,11 +5376,17 @@ impl Element for EditorElement {
                             buffer_rows.iter().copied(),
                             &active_rows,
                             &snapshot,
+                            window,
                             cx,
                         )
                     });
                     let crease_trailers = cx.with_element_namespace("crease_trailers", |cx| {
-                        self.layout_crease_trailers(buffer_rows.iter().copied(), &snapshot, cx)
+                        self.layout_crease_trailers(
+                            buffer_rows.iter().copied(),
+                            &snapshot,
+                            window,
+                            cx,
+                        )
                     });
 
                     let display_hunks = self.layout_gutter_git_hunks(
@@ -5356,6 +5395,7 @@ impl Element for EditorElement {
                         start_row..end_row,
                         start_anchor..end_anchor,
                         &snapshot,
+                        window,
                         cx,
                     );
 
@@ -5366,6 +5406,7 @@ impl Element for EditorElement {
                         &self.style,
                         editor_width,
                         is_row_soft_wrapped,
+                        window,
                         cx,
                     );
                     for line_with_invisibles in &line_layouts {
@@ -5380,6 +5421,7 @@ impl Element for EditorElement {
                         &style,
                         editor_width,
                         is_row_soft_wrapped,
+                        window,
                         cx,
                     )
                     .width;
@@ -5401,6 +5443,7 @@ impl Element for EditorElement {
                             &line_layouts,
                             &local_selections,
                             is_row_soft_wrapped,
+                            window,
                             cx,
                         )
                     });
@@ -5458,6 +5501,7 @@ impl Element for EditorElement {
                         scroll_pixel_position,
                         line_height,
                         &snapshot,
+                        window,
                         cx,
                     );
 
@@ -5469,6 +5513,7 @@ impl Element for EditorElement {
                             content_origin,
                             scroll_pixel_position,
                             em_width,
+                            window,
                             cx,
                         )
                     });
@@ -5489,6 +5534,7 @@ impl Element for EditorElement {
                                 content_origin,
                                 scroll_pixel_position,
                                 line_height,
+                                window,
                                 cx,
                             );
                         }
@@ -5501,6 +5547,7 @@ impl Element for EditorElement {
                         line_height,
                         &gutter_hitbox,
                         gutter_dimensions.git_blame_entries_width,
+                        window,
                         cx,
                     );
 
@@ -5537,6 +5584,7 @@ impl Element for EditorElement {
                         line_height,
                         scroll_pixel_position,
                         content_origin,
+                        window,
                         cx,
                     );
 
@@ -5548,11 +5596,12 @@ impl Element for EditorElement {
                             &hitbox,
                             line_height,
                             scroll_pixel_position,
+                            window,
                             cx,
                         );
                     });
 
-                    let cursors = self.collect_cursors(&snapshot, cx);
+                    let cursors = self.collect_cursors(&snapshot, window, cx);
                     let visible_row_range = start_row..end_row;
                     let non_visible_cursors = cursors
                         .iter()
@@ -5571,6 +5620,7 @@ impl Element for EditorElement {
                         line_height,
                         em_width,
                         autoscroll_containing_element,
+                        window,
                         cx,
                     );
 
@@ -5580,6 +5630,7 @@ impl Element for EditorElement {
                         scroll_position,
                         height_in_lines,
                         non_visible_cursors,
+                        window,
                         cx,
                     );
 
@@ -5636,6 +5687,7 @@ impl Element for EditorElement {
                                 &line_layouts,
                                 newest_selection_head,
                                 gutter_dimensions.width - gutter_dimensions.left_padding,
+                                window,
                                 cx,
                             );
 
@@ -5671,6 +5723,7 @@ impl Element for EditorElement {
                                                     &gutter_dimensions,
                                                     &gutter_hitbox,
                                                     &rows_with_hunk_bounds,
+                                                    window,
                                                     cx,
                                                 );
                                         }
@@ -5689,6 +5742,7 @@ impl Element for EditorElement {
                             &gutter_hitbox,
                             &rows_with_hunk_bounds,
                             &snapshot,
+                            window,
                             cx,
                         )
                     } else {
@@ -5704,6 +5758,7 @@ impl Element for EditorElement {
                         &line_layouts,
                         line_height,
                         em_width,
+                        window,
                         cx,
                     );
 
@@ -5718,12 +5773,13 @@ impl Element for EditorElement {
                             &line_layouts,
                             line_height,
                             em_width,
+                            window,
                             cx,
                         );
                     }
 
                     let mouse_context_menu =
-                        self.layout_mouse_context_menu(&snapshot, start_row..end_row, cx);
+                        self.layout_mouse_context_menu(&snapshot, start_row..end_row, window, cx);
 
                     cx.with_element_namespace("crease_toggles", |cx| {
                         self.prepaint_crease_toggles(
@@ -5733,6 +5789,7 @@ impl Element for EditorElement {
                             gutter_settings,
                             scroll_pixel_position,
                             &gutter_hitbox,
+                            window,
                             cx,
                         )
                     });
@@ -5834,7 +5891,7 @@ impl Element for EditorElement {
             ElementInputHandler::new(bounds, self.editor.clone()),
         );
         self.register_actions(window, cx);
-        self.register_key_listeners(cx, layout);
+        self.register_key_listeners(layout, window, cx);
 
         let text_style = TextStyleRefinement {
             font_size: Some(self.style.text.font_size),
@@ -5871,30 +5928,30 @@ impl Element for EditorElement {
         cx.with_rem_size(rem_size, |cx| {
             cx.with_text_style(Some(text_style), |cx| {
                 cx.with_content_mask(Some(ContentMask { bounds }), |cx| {
-                    self.paint_mouse_listeners(layout, hovered_hunk, cx);
-                    self.paint_background(layout, cx);
-                    self.paint_indent_guides(layout, cx);
+                    self.paint_mouse_listeners(layout, hovered_hunk, window, cx);
+                    self.paint_background(layout, window, cx);
+                    self.paint_indent_guides(layout, window, cx);
 
                     if layout.gutter_hitbox.size.width > Pixels::ZERO {
-                        self.paint_blamed_display_rows(layout, cx);
-                        self.paint_line_numbers(layout, cx);
+                        self.paint_blamed_display_rows(layout, window, cx);
+                        self.paint_line_numbers(layout, window, cx);
                     }
 
-                    self.paint_text(layout, cx);
+                    self.paint_text(layout, window, cx);
 
                     if layout.gutter_hitbox.size.width > Pixels::ZERO {
-                        self.paint_gutter_highlights(layout, cx);
-                        self.paint_gutter_indicators(layout, cx);
+                        self.paint_gutter_highlights(layout, window, cx);
+                        self.paint_gutter_indicators(layout, window, cx);
                     }
 
                     if !layout.blocks.is_empty() {
                         cx.with_element_namespace("blocks", |cx| {
-                            self.paint_blocks(layout, cx);
+                            self.paint_blocks(layout, window, cx);
                         });
                     }
 
-                    self.paint_scrollbar(layout, cx);
-                    self.paint_mouse_context_menu(layout, cx);
+                    self.paint_scrollbar(layout, window, cx);
+                    self.paint_mouse_context_menu(layout, window, cx);
                 });
             })
         })
@@ -6172,6 +6229,7 @@ fn layout_line(
         snapshot.mode,
         text_width,
         is_row_soft_wrapped,
+        window,
         cx,
     )
     .pop()
@@ -6328,15 +6386,16 @@ pub struct HighlightedRangeLine {
 impl HighlightedRange {
     pub fn paint(&self, bounds: Bounds<Pixels>, window: &mut Window, cx: &mut AppContext) {
         if self.lines.len() >= 2 && self.lines[0].start_x > self.lines[1].end_x {
-            self.paint_lines(self.start_y, &self.lines[0..1], bounds, cx);
+            self.paint_lines(self.start_y, &self.lines[0..1], bounds, window, cx);
             self.paint_lines(
                 self.start_y + self.line_height,
                 &self.lines[1..],
                 bounds,
+                window,
                 cx,
             );
         } else {
-            self.paint_lines(self.start_y, &self.lines, bounds, cx);
+            self.paint_lines(self.start_y, &self.lines, bounds, window, cx);
         }
     }
 
@@ -6462,11 +6521,11 @@ pub fn register_action<T: Action>(
     listener: impl Fn(&mut Editor, &T, &mut ModelContext<Editor>) + 'static,
 ) {
     let view = view.clone();
-    cx.on_action(TypeId::of::<T>(), move |action, phase, cx| {
+    window.on_action(TypeId::of::<T>(), move |action, phase, window, cx| {
         let action = action.downcast_ref().unwrap();
         if phase == DispatchPhase::Bubble {
             view.update(cx, |editor, cx| {
-                listener(editor, action, cx);
+                listener(editor, action, window, cx);
             })
         }
     })
@@ -6507,7 +6566,7 @@ fn compute_auto_height_layout(
         .unwrap()
         .width;
 
-    let mut snapshot = editor.snapshot(cx);
+    let mut snapshot = editor.snapshot(window, cx);
     let gutter_dimensions = snapshot.gutter_dimensions(
         font_id,
         font_size,
@@ -6523,7 +6582,7 @@ fn compute_auto_height_layout(
 
     let editor_width = text_width - gutter_dimensions.margin - overscroll.width - em_width;
     if editor.set_wrap_width(Some(editor_width), cx) {
-        snapshot = editor.snapshot(cx);
+        snapshot = editor.snapshot(window, cx);
     }
 
     let scroll_height = Pixels::from(snapshot.max_point().row().next_row().0) * line_height;
@@ -6563,13 +6622,14 @@ mod tests {
         let snapshot = window.update(cx, |editor, cx| editor.snapshot(cx)).unwrap();
 
         let layouts = cx
-            .update_window(*window, |_, cx| {
+            .update_window(*window, |window, cx| {
                 element.layout_line_numbers(
                     DisplayRow(0)..DisplayRow(6),
                     (0..6).map(MultiBufferRow).map(Some),
                     &Default::default(),
                     Some(DisplayPoint::new(DisplayRow(0), 0)),
                     &snapshot,
+                    window,
                     cx,
                 )
             })

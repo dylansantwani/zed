@@ -296,7 +296,7 @@ pub fn setup_editor_session_actions(editor: &mut Editor, editor_handle: WeakMode
                     return;
                 }
 
-                crate::clear_outputs(editor_handle.clone(), window, window, cx);
+                crate::clear_outputs(editor_handle.clone(), window, cx);
             }
         })
         .detach();

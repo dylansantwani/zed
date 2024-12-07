@@ -25,8 +25,8 @@ pub fn apply_related_actions(editor: &Model<Editor>, window: &mut Window, cx: &m
         })
         .is_some()
     {
-        register_action(editor, cx, expand_macro_recursively);
-        register_action(editor, cx, open_docs);
+        register_action(editor, window, cx, expand_macro_recursively);
+        register_action(editor, window, cx, open_docs);
     }
 }
 
@@ -93,6 +93,7 @@ pub fn expand_macro_recursively(
                 ),
                 None,
                 true,
+                window,
                 cx,
             );
         })

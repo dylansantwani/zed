@@ -74,14 +74,14 @@ impl TabSwitcher {
                 else {
                     return;
                 };
-                if let Some(pane) = panel.pane(cx) {
+                if let Some(pane) = panel.pane(window, cx) {
                     weak_pane = pane.downgrade();
                 }
             })
         }
 
         let project = workspace.project().clone();
-        workspace.toggle_modal(cx, |cx| {
+        workspace.toggle_modal(window, cx, |window, cx| {
             let delegate =
                 TabSwitcherDelegate::new(project, action, cx.handle().downgrade(), weak_pane, cx);
             TabSwitcher::new(delegate, cx)

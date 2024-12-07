@@ -1,7 +1,7 @@
 use crate::ItemHandle;
 use gpui::{
-    AnyView, Entity, EntityId, EventEmitter, ModelContext, ParentElement as _, Render, Styled,
-    View, WindowContext,
+    AnyView, Entity, EntityId, EventEmitter, Model, ModelContext, ParentElement as _, Render,
+    Styled, View, WindowContext,
 };
 use ui::prelude::*;
 use ui::{h_flex, v_flex};
@@ -167,7 +167,7 @@ impl Toolbar {
     where
         T: 'static + ToolbarItemView,
     {
-        let location = item.set_active_pane_item(self.active_item.as_deref(), cx);
+        let location = item.set_active_pane_item(self.active_item.as_deref(), window, cx);
         cx.subscribe(&item, |this, item, event, cx| {
             if let Some((_, current_location)) = this
                 .items
@@ -198,7 +198,7 @@ impl Toolbar {
             .unwrap_or(false);
 
         for (toolbar_item, current_location) in self.items.iter_mut() {
-            let new_location = toolbar_item.set_active_pane_item(item, cx);
+            let new_location = toolbar_item.set_active_pane_item(item, window, cx);
             if new_location != *current_location {
                 *current_location = new_location;
                 cx.notify();

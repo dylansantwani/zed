@@ -518,7 +518,8 @@ pub fn connect_over_ssh(
     unique_identifier: ConnectionIdentifier,
     connection_options: SshConnectionOptions,
     ui: Model<SshPrompt>,
-    window: &mut Window, cx: &mut AppContext,
+    window: &mut Window,
+    cx: &mut AppContext,
 ) -> Task<Result<Option<Model<SshRemoteClient>>>> {
     let window = cx.window_handle();
     let known_password = connection_options.password.clone();
@@ -570,7 +571,7 @@ pub async fn open_ssh_project(
             let paths = paths.clone();
             move |workspace, cx| {
                 cx.activate_window();
-                workspace.toggle_modal(cx, |cx| {
+                workspace.toggle_modal(window, cx, |window, cx| {
                     SshConnectionModal::new(&connection_options, paths, cx)
                 });
 

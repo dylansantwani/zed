@@ -577,9 +577,9 @@ pub fn init(assets: impl AssetSource, cx: &mut AppContext) {
     init_settings(cx);
     file_icons::init(assets, cx);
 
-    cx.observe_new_views(|workspace: &mut Workspace, _| {
+    cx.observe_new_models(|workspace: &mut Workspace, _| {
         workspace.register_action(|workspace, _: &ToggleFocus, cx| {
-            workspace.toggle_panel_focus::<OutlinePanel>(cx);
+            workspace.toggle_panel_focus::<OutlinePanel>(window, cx);
         });
     })
     .detach();
@@ -655,7 +655,7 @@ impl OutlinePanel {
                                 );
                             }
                         } else {
-                            outline_panel.clear_previous(cx);
+                            outline_panel.clear_previous(window, cx);
                             cx.notify();
                         }
                     }
@@ -2459,7 +2459,7 @@ impl OutlinePanel {
         new_active_editor: Model<Editor>,
         cx: &mut ModelContext<Self>,
     ) {
-        self.clear_previous(cx);
+        self.clear_previous(window, cx);
         let buffer_search_subscription = cx.subscribe(
             &new_active_editor,
             |outline_panel: &mut Self, _, e: &SearchEvent, cx: &mut ModelContext<'_, Self>| {
@@ -2508,7 +2508,7 @@ impl OutlinePanel {
         let selection = editor.update(cx, |editor, cx| {
             editor.selections.newest::<language::Point>(cx).head()
         });
-        let editor_snapshot = editor.update(cx, |editor, cx| editor.snapshot(cx));
+        let editor_snapshot = editor.update(cx, |editor, cx| editor.snapshot(window, cx));
         let multi_buffer = editor.read(cx).buffer();
         let multi_buffer_snapshot = multi_buffer.read(cx).snapshot(cx);
         let (excerpt_id, buffer, _) = editor
@@ -3044,6 +3044,7 @@ impl OutlinePanel {
                                                 track_matches,
                                                 new_folded_dirs,
                                                 folded_depth,
+                                                window,
                                                 cx,
                                             );
                                         }
@@ -3081,6 +3082,7 @@ impl OutlinePanel {
                                         track_matches,
                                         PanelEntry::FoldedDirs(worktree_id, folded_dirs),
                                         folded_depth,
+                                        window,
                                         cx,
                                     );
                                 }
@@ -3105,6 +3107,7 @@ impl OutlinePanel {
                                         track_matches,
                                         PanelEntry::FoldedDirs(worktree_id, folded_dirs),
                                         folded_depth,
+                                        window,
                                         cx,
                                     );
                                 }
@@ -3140,6 +3143,7 @@ impl OutlinePanel {
                             track_matches,
                             PanelEntry::Fs(entry.clone()),
                             depth,
+                            window,
                             cx,
                         );
                     }
@@ -3198,6 +3202,7 @@ impl OutlinePanel {
                             track_matches,
                             PanelEntry::Fs(entry.clone()),
                             0,
+                            window,
                             cx,
                         );
                     }
@@ -3215,6 +3220,7 @@ impl OutlinePanel {
                             track_matches,
                             PanelEntry::FoldedDirs(worktree_id, folded_dirs),
                             folded_depth,
+                            window,
                             cx,
                         );
                     }
@@ -3509,6 +3515,7 @@ impl OutlinePanel {
                         excerpt.range.clone(),
                     )),
                     excerpt_depth,
+                    window,
                     cx,
                 );
 
@@ -3534,6 +3541,7 @@ impl OutlinePanel {
                             outline.clone(),
                         )),
                         outline_base_depth + outline.depth,
+                        window,
                         cx,
                     );
                 }
@@ -3587,6 +3595,7 @@ impl OutlinePanel {
                 filter_query.is_some(),
                 PanelEntry::Search(new_search_entry),
                 depth,
+                window,
                 cx,
             );
         }
@@ -4047,38 +4056,44 @@ impl OutlinePanel {
     }
 
     fn render_filter_footer(&mut self, pinned: bool, cx: &mut ModelContext<'_, Self>) -> Div {
-        v_flex().flex_none().child(horizontal_separator(cx)).child(
-            h_flex()
-                .p_2()
-                .w_full()
-                .child(self.filter_editor.clone())
-                .child(
-                    div().child(
-                        IconButton::new(
-                            "outline-panel-menu",
-                            if pinned {
-                                IconName::Unpin
-                            } else {
-                                IconName::Pin
-                            },
-                        )
-                        .tooltip(move |window, cx| {
-                            Tooltip::text(
+        v_flex()
+            .flex_none()
+            .child(horizontal_separator(window, cx))
+            .child(
+                h_flex()
+                    .p_2()
+                    .w_full()
+                    .child(self.filter_editor.clone())
+                    .child(
+                        div().child(
+                            IconButton::new(
+                                "outline-panel-menu",
                                 if pinned {
-                                    "Unpin Outline"
+                                    IconName::Unpin
                                 } else {
-                                    "Pin Active Outline"
+                                    IconName::Pin
                                 },
-                                cx,
                             )
-                        })
-                        .shape(IconButtonShape::Square)
-                        .on_click(cx.listener(|outline_panel, _, cx| {
-                            outline_panel.toggle_active_editor_pin(&ToggleActiveEditorPin, cx);
-                        })),
+                            .tooltip(move |window, cx| {
+                                Tooltip::text(
+                                    if pinned {
+                                        "Unpin Outline"
+                                    } else {
+                                        "Pin Active Outline"
+                                    },
+                                    cx,
+                                )
+                            })
+                            .shape(IconButtonShape::Square)
+                            .on_click(cx.listener(
+                                |outline_panel, _, cx| {
+                                    outline_panel
+                                        .toggle_active_editor_pin(&ToggleActiveEditorPin, cx);
+                                },
+                            )),
+                        ),
                     ),
-                ),
-        )
+            )
     }
 }
 
@@ -4209,7 +4224,7 @@ impl Panel for OutlinePanel {
                                 )
                             }
                         } else if !outline_panel.pinned {
-                            outline_panel.clear_previous(cx);
+                            outline_panel.clear_previous(window, cx);
                         }
                     }
                     outline_panel.serialize(cx);
@@ -4304,7 +4319,7 @@ impl Render for OutlinePanel {
                                 .color(Color::Muted)
                                 .mx_2(),
                         )
-                        .child(horizontal_separator(cx)),
+                        .child(horizontal_separator(window, cx)),
                 )
             })
             .child(self.render_main_contents(query, show_indent_guides, indent_size, cx))
@@ -4852,7 +4867,7 @@ mod tests {
                 select_first_in_all_matches(initial_outline_selection)
             );
             assert_eq!(
-                selected_row_text(&active_editor, cx),
+                selected_row_text(&active_editor, window, cx),
                 initial_outline_selection.replace("search: ", ""), // Clear outline metadata prefixes
                 "Should place the initial editor selection on the corresponding search result"
             );
@@ -4873,7 +4888,7 @@ mod tests {
                 select_first_in_all_matches(navigated_outline_selection)
             );
             assert_eq!(
-                selected_row_text(&active_editor, cx),
+                selected_row_text(&active_editor, window, cx),
                 initial_outline_selection.replace("search: ", ""), // Clear outline metadata prefixes
                 "Should still have the initial caret position after SelectNext calls"
             );
@@ -4884,7 +4899,7 @@ mod tests {
         });
         outline_panel.update(cx, |_, cx| {
             assert_eq!(
-                selected_row_text(&active_editor, cx),
+                selected_row_text(&active_editor, window, cx),
                 navigated_outline_selection.replace("search: ", ""), // Clear outline metadata prefixes
                 "After opening, should move the caret to the opened outline entry's position"
             );
@@ -4905,7 +4920,7 @@ mod tests {
                 select_first_in_all_matches(next_navigated_outline_selection)
             );
             assert_eq!(
-                selected_row_text(&active_editor, cx),
+                selected_row_text(&active_editor, window, cx),
                 navigated_outline_selection.replace("search: ", ""), // Clear outline metadata prefixes
                 "Should again preserve the selection after another SelectNext call"
             );
@@ -4936,7 +4951,7 @@ mod tests {
                 "fn_lifetime_fn.rs  <==== selected"
             );
             assert_eq!(
-                selected_row_text(&new_active_editor, cx),
+                selected_row_text(&new_active_editor, window, cx),
                 next_navigated_outline_selection.replace("search: ", ""), // Clear outline metadata prefixes
                 "When opening the excerpt, should navigate to the place corresponding the outline entry"
             );

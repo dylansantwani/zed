@@ -30,7 +30,7 @@ fn configure_snippets(
     let language_registry = workspace.app_state().languages.clone();
     let workspace_handle = workspace.weak_handle();
 
-    workspace.toggle_modal(cx, move |cx| {
+    workspace.toggle_modal(window, cx, move |cx| {
         ScopeSelector::new(language_registry, workspace_handle, cx)
     });
 }

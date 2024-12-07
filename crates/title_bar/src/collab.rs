@@ -39,7 +39,7 @@ fn toggle_screen_sharing(_: &ToggleScreenSharing, window: &mut Window, cx: &mut 
                 room.share_screen(cx)
             }
         });
-        toggle_screen_sharing.detach_and_prompt_err("Sharing Screen Failed", cx, |e, _| Some(format!("{:?}\n\nPlease check that you have given Zed permissions to record your screen in Settings.", e)));
+        toggle_screen_sharing.detach_and_prompt_err("Sharing Screen Failed", window, cx, |e, _, _| Some(format!("{:?}\n\nPlease check that you have given Zed permissions to record your screen in Settings.", e)));
     }
 }
 
@@ -342,7 +342,7 @@ impl TitleBar {
                         .style(ButtonStyle::Subtle)
                         .tooltip(|cx| Tooltip::text("Leave call", cx))
                         .icon_size(IconSize::Small)
-                        .on_click(move |_, cx| {
+                        .on_click(move |_, _window, cx| {
                             ActiveCall::global(cx)
                                 .update(cx, |call, cx| call.hang_up(cx))
                                 .detach_and_log_err(cx);

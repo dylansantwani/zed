@@ -175,7 +175,7 @@ impl<D: PickerDelegate> Picker<D> {
     /// If `PickerDelegate::render_match` can return items with different heights, use `Picker::list`.
     pub fn uniform_list(delegate: D, cx: &mut ModelContext<Self>) -> Self {
         let head = Head::editor(
-            delegate.placeholder_text(cx),
+            delegate.placeholder_text(window, cx),
             Self::on_input_editor_event,
             cx,
         );
@@ -196,7 +196,7 @@ impl<D: PickerDelegate> Picker<D> {
     /// If `PickerDelegate::render_match` only returns items with the same height, use `Picker::uniform_list` as its implementation is optimized for that.
     pub fn list(delegate: D, cx: &mut ModelContext<Self>) -> Self {
         let head = Head::editor(
-            delegate.placeholder_text(cx),
+            delegate.placeholder_text(window, cx),
             Self::on_input_editor_event,
             cx,
         );
@@ -375,7 +375,7 @@ impl<D: PickerDelegate> Picker<D> {
 
     fn confirm_completion(&mut self, _: &ConfirmCompletion, cx: &mut ModelContext<Self>) {
         if let Some(new_query) = self.delegate.confirm_completion(self.query(cx), cx) {
-            self.set_query(new_query, cx);
+            self.set_query(new_query, window, cx);
         } else {
             cx.propagate()
         }
@@ -390,7 +390,7 @@ impl<D: PickerDelegate> Picker<D> {
 
     fn do_confirm(&mut self, secondary: bool, cx: &mut ModelContext<Self>) {
         if let Some(update_query) = self.delegate.confirm_update_query(cx) {
-            self.set_query(update_query, cx);
+            self.set_query(update_query, window, cx);
             self.delegate.set_selected_index(0, cx);
         } else {
             self.delegate.confirm(secondary, cx)
@@ -428,7 +428,7 @@ impl<D: PickerDelegate> Picker<D> {
     pub fn refresh_placeholder(&mut self, window: &mut Window, cx: &mut AppContext) {
         match &self.head {
             Head::Editor(view) => {
-                let placeholder = self.delegate.placeholder_text(cx);
+                let placeholder = self.delegate.placeholder_text(window, cx);
                 view.update(cx, |this, cx| {
                     this.set_placeholder_text(placeholder, cx);
                     cx.notify();

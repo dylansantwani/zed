@@ -12,7 +12,7 @@ use editor::{
 };
 use gpui::{
     actions, AnyView, AppContext, ClipboardItem, Entity as _, EventEmitter, FocusableView, Model,
-    Pixels, Point, Render, Subscription, Task, View, ModelContext, VisualContext as _, WeakView,
+    ModelContext, Pixels, Point, Render, Subscription, Task, View, VisualContext as _, WeakView,
     WindowContext,
 };
 use project::Project;
@@ -53,7 +53,8 @@ impl ChannelView {
         channel_id: ChannelId,
         link_position: Option<String>,
         workspace: Model<Workspace>,
-        window: &mut Window, cx: &mut AppContext,
+        window: &mut Window,
+        cx: &mut AppContext,
     ) -> Task<Result<Model<Self>>> {
         let pane = workspace.read(cx).active_pane().clone();
         let channel_view = Self::open_in_pane(
@@ -61,6 +62,7 @@ impl ChannelView {
             link_position,
             pane.clone(),
             workspace.clone(),
+            window,
             cx,
         );
         cx.spawn(|mut cx| async move {
@@ -83,9 +85,10 @@ impl ChannelView {
         link_position: Option<String>,
         pane: Model<Pane>,
         workspace: Model<Workspace>,
-        window: &mut Window, cx: &mut AppContext,
+        window: &mut Window,
+        cx: &mut AppContext,
     ) -> Task<Result<Model<Self>>> {
-        let channel_view = Self::load(channel_id, workspace, cx);
+        let channel_view = Self::load(channel_id, workspace, window, cx);
         cx.spawn(|mut cx| async move {
             let channel_view = channel_view.await?;
 
@@ -133,7 +136,8 @@ impl ChannelView {
     pub fn load(
         channel_id: ChannelId,
         workspace: Model<Workspace>,
-        window: &mut Window, cx: &mut AppContext,
+        window: &mut Window,
+        cx: &mut AppContext,
     ) -> Task<Result<Model<Self>>> {
         let weak_workspace = workspace.downgrade();
         let workspace = workspace.read(cx);
@@ -221,7 +225,9 @@ impl ChannelView {
         cx: &mut ModelContext<Self>,
     ) {
         let position = Channel::slug(&position).to_lowercase();
-        let snapshot = self.editor.update(cx, |editor, cx| editor.snapshot(cx));
+        let snapshot = self
+            .editor
+            .update(cx, |editor, cx| editor.snapshot(window, cx));
 
         if let Some(outline) = snapshot.buffer_snapshot.outline(None) {
             if let Some(item) = outline
@@ -266,7 +272,9 @@ impl ChannelView {
     }
 
     fn copy_link_for_position(&self, position: DisplayPoint, cx: &mut ModelContext<Self>) {
-        let snapshot = self.editor.update(cx, |editor, cx| editor.snapshot(cx));
+        let snapshot = self
+            .editor
+            .update(cx, |editor, cx| editor.snapshot(window, cx));
 
         let mut closest_heading = None;
 
@@ -518,7 +526,8 @@ impl FollowableItem for ChannelView {
         workspace: Model<workspace::Workspace>,
         remote_id: workspace::ViewId,
         state: &mut Option<proto::view::Variant>,
-        window: &mut Window, cx: &mut AppContext,
+        window: &mut Window,
+        cx: &mut AppContext,
     ) -> Option<gpui::Task<anyhow::Result<Model<Self>>>> {
         let Some(proto::view::Variant::ChannelView(_)) = state else {
             return None;
@@ -527,7 +536,7 @@ impl FollowableItem for ChannelView {
             unreachable!()
         };
 
-        let open = ChannelView::load(ChannelId(state.channel_id), workspace, cx);
+        let open = ChannelView::load(ChannelId(state.channel_id), workspace, window, cx);
 
         Some(cx.spawn(|mut cx| async move {
             let this = open.await?;
