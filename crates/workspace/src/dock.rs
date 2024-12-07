@@ -221,9 +221,15 @@ impl Dock {
         let focus_handle = window.focus_handle();
         let workspace = cx.handle().clone();
         let dock = cx.new_model(|cx: &mut ModelContext<Self>| {
-            let focus_subscription = window.on_focus(&focus_handle, |dock, window| {
-                if let Some(active_entry) = dock.panel_entries.get(dock.active_panel_index) {
-                    active_entry.panel.focus_handle(cx).focus(window)
+            let focus_subscription = window.on_focus(&focus_handle, cx, {
+                let dock = cx.handle();
+                move |window, cx| {
+                    dock.update(cx, |dock, cx| {
+                        if let Some(active_entry) = dock.panel_entries.get(dock.active_panel_index)
+                        {
+                            active_entry.panel.focus_handle(cx).focus(window)
+                        }
+                    })
                 }
             });
             let zoom_subscription = cx.subscribe(&workspace, |dock, workspace, e: &Event, cx| {
@@ -245,25 +251,28 @@ impl Dock {
         });
 
         window
-            .on_focus_in(&focus_handle, {
+            .on_focus_in(&focus_handle, cx, {
                 let dock = dock.downgrade();
                 move |workspace, cx| {
-                    let Some(dock) = dock.upgrade() else {
-                        return;
-                    };
-                    let Some(panel) = dock.read(cx).active_panel() else {
-                        return;
-                    };
-                    if panel.is_zoomed(window, cx) {
-                        workspace.zoomed = Some(panel.downgrade());
-                        workspace.zoomed_position = Some(position);
-                    } else {
-                        workspace.zoomed = None;
-                        workspace.zoomed_position = None;
-                    }
-                    cx.emit(Event::ZoomChanged);
-                    workspace.dismiss_zoomed_items_to_reveal(Some(position), cx);
-                    workspace.update_active_view_for_followers(cx)
+                    let workspace = workspace.clone();
+                    workspace.update(cx, |workspace, cx| {
+                        let Some(dock) = dock.upgrade() else {
+                            return;
+                        };
+                        let Some(panel) = dock.read(cx).active_panel() else {
+                            return;
+                        };
+                        if panel.is_zoomed(window, cx) {
+                            workspace.zoomed = Some(Arc::downgrade(&panel));
+                            workspace.zoomed_position = Some(position);
+                        } else {
+                            workspace.zoomed = None;
+                            workspace.zoomed_position = None;
+                        }
+                        cx.emit(Event::ZoomChanged);
+                        workspace.dismiss_zoomed_items_to_reveal(Some(position), cx);
+                        workspace.update_active_view_for_followers(cx)
+                    })
                 }
             })
             .detach();
@@ -771,7 +780,7 @@ impl Render for PanelButtons {
                             ContextMenu::build(window, cx, |mut menu, window, cx| {
                                 for position in POSITIONS {
                                     if position != dock_position
-                                        && panel.position_is_valid(position, cx)
+                                        && panel.position_is_valid(position, window, cx)
                                     {
                                         let panel = panel.clone();
                                         menu = menu.entry(

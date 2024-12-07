@@ -105,13 +105,18 @@ impl ModalLayer {
                 cx.subscribe(&new_modal, |this, _, _: &DismissEvent, cx| {
                     this.hide_modal(window, cx);
                 }),
-                cx.on_focus_out(&focus_handle, |this, _event, cx| {
-                    if this.dismiss_on_focus_lost {
-                        this.hide_modal(cx);
+                window.on_focus_out(&focus_handle, cx, {
+                    let this = cx.handle();
+                    move |_event, window, cx| {
+                        this.update(cx, |this, cx| {
+                            if this.dismiss_on_focus_lost {
+                                this.hide_modal(window, cx);
+                            }
+                        });
                     }
                 }),
             ],
-            previous_focus_handle: cx.focused(),
+            previous_focus_handle: window.focused(),
             focus_handle,
         });
         cx.defer(move |_, cx| {

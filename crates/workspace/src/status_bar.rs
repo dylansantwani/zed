@@ -95,12 +95,16 @@ impl StatusBar {
         this
     }
 
-    pub fn add_left_item<T>(&mut self, item: Model<T>, cx: &mut ModelContext<Self>)
-    where
+    pub fn add_left_item<T>(
+        &mut self,
+        item: Model<T>,
+        window: &mut Window,
+        cx: &mut ModelContext<Self>,
+    ) where
         T: 'static + StatusItemView,
     {
         let active_pane_item = self.active_pane.read(cx).active_item();
-        item.set_active_pane_item(active_pane_item.as_deref(), cx);
+        item.set_active_pane_item(active_pane_item.as_deref(), window, cx);
 
         self.left_items.push(Box::new(item));
         cx.notify();

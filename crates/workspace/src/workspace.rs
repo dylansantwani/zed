@@ -354,7 +354,7 @@ pub fn init(app_state: Arc<AppState>, cx: &mut AppContext) {
                                     .and_then(|window| window.downcast::<Workspace>())
                                 {
                                     workspace_window
-                                        .update(cx, |workspace, cx| {
+                                        .update(cx, |workspace, window, cx| {
                                             workspace.show_portal_error(err.to_string(), cx);
                                         })
                                         .ok();
@@ -398,7 +398,7 @@ pub fn register_project_item<I: ProjectItem>(cx: &mut AppContext) {
             let project_entry_id: Option<ProjectEntryId> =
                 project_item.read_with(&cx, project::Item::entry_id)?;
             let build_workspace_item = Box::new(|cx: &mut ModelContext<Pane>| {
-                Box::new(cx.new_model(|cx| I::for_project_item(project, project_item, cx)))
+                Box::new(cx.new_model(|cx| I::for_project_item(project, project_item, window, cx)))
                     as Box<dyn ItemHandle>
             }) as Box<_>;
             Ok((project_entry_id, build_workspace_item))
@@ -417,7 +417,7 @@ struct FollowableViewDescriptor {
         &mut Window,
         &mut AppContext,
     ) -> Option<Task<Result<Box<dyn FollowableItemHandle>>>>,
-    to_followable_view: fn(&AnyView) -> Box<dyn FollowableItemHandle>,
+    to_followable_view: fn(&AnyModel) -> Box<dyn FollowableItemHandle>,
 }
 
 impl Global for FollowableViewRegistry {}
@@ -427,7 +427,7 @@ impl FollowableViewRegistry {
         cx.default_global::<Self>().0.insert(
             TypeId::of::<I>(),
             FollowableViewDescriptor {
-                from_state_proto: |workspace, id, state, cx| {
+                from_state_proto: |workspace, id, state, window, cx| {
                     I::from_state_proto(workspace, id, state, cx).map(|task| {
                         cx.foreground_executor()
                             .spawn(async move { Ok(Box::new(task.await?) as Box<_>) })
@@ -953,15 +953,15 @@ impl Workspace {
         let bottom_dock = Dock::new(DockPosition::Bottom, window, cx);
         let right_dock = Dock::new(DockPosition::Right, window, cx);
         let left_dock_buttons =
-            cx.new_model(|cx| PanelButtons::new(left_dock.clone(), window, cx));
+            cx.new_model(|cx| PanelButtons::new(left_dock.clone(),  cx));
         let bottom_dock_buttons =
-            cx.new_model(|cx| PanelButtons::new(bottom_dock.clone(), window, cx));
+            cx.new_model(|cx| PanelButtons::new(bottom_dock.clone(),  cx));
         let right_dock_buttons = cx.new_model(|cx| PanelButtons::new(right_dock.clone(), cx));
         let status_bar = cx.new_model(|cx| {
-            let mut status_bar = StatusBar::new(&center_pane.clone(), cx);
-            status_bar.add_left_item(left_dock_buttons, cx);
-            status_bar.add_right_item(right_dock_buttons, cx);
-            status_bar.add_right_item(bottom_dock_buttons, cx);
+            let mut status_bar = StatusBar::new(&center_pane.clone(), window, cx);
+            status_bar.add_left_item(left_dock_buttons, window, cx);
+            status_bar.add_right_item(right_dock_buttons, window, cx);
+            status_bar.add_right_item(bottom_dock_buttons, window, cx);
             status_bar
         });
 
@@ -2560,7 +2560,7 @@ impl Workspace {
         }
 
         pane.update(cx, |pane, cx| {
-            pane.add_item(item, activate_pane, focus_item, destination_index, cx)
+            pane.add_item(item, activate_pane, focus_item, destination_index, window, cx)
         });
     }
 
@@ -2568,10 +2568,11 @@ impl Workspace {
         &mut self,
         split_direction: SplitDirection,
         item: Box<dyn ItemHandle>,
+        window: &mut Window,
         cx: &mut ModelContext<Self>,
     ) {
         let new_pane = self.split_pane(self.active_pane.clone(), split_direction, cx);
-        self.add_item(new_pane, item, None, true, true, cx);
+        self.add_item(new_pane, item, None, true, true, window, cx);
     }
 
     pub fn open_abs_path(
@@ -2636,7 +2637,7 @@ impl Workspace {
         window: &mut Window,
         cx: &mut AppContext,
     ) -> Task<Result<Box<dyn ItemHandle>, anyhow::Error>> {
-        self.open_path_preview(path, pane, focus_item, false, cx)
+        self.open_path_preview(path, pane, focus_item, false, window, cx)
     }
 
     pub fn open_path_preview(
@@ -2657,7 +2658,7 @@ impl Workspace {
             })
         });
 
-        let task = self.load_path(path.into(), cx);
+        let task = self.load_path(path.into(), window, cx);
         cx.spawn(move |mut cx| async move {
             let (project_entry_id, build_item) = task.await?;
             pane.update(&mut cx, |pane, cx| {
@@ -2735,7 +2736,7 @@ impl Workspace {
         let Some(open_project_item) = project_item_builders
             .iter()
             .rev()
-            .find_map(|open_project_item| open_project_item(&project, &path, window, cx))
+            .find_map(|open_project_item| open_project_item(&project, &path, &window, cx))
         else {
             return Task::ready(Err(anyhow!("cannot open file {:?}", path.path)));
         };
@@ -2850,7 +2851,7 @@ impl Workspace {
         });
         if let Some((pane, ix)) = result {
             pane.update(cx, |pane, cx| {
-                pane.activate_item(ix, activate_pane, focus_item, cx)
+                pane.activate_item(ix, activate_pane, focus_item, window, cx)
             });
             true
         } else {
@@ -3589,9 +3590,10 @@ impl Workspace {
     fn active_view_for_follower(
         &self,
         follower_project_id: Option<u64>,
+        window: &mut Window,
         cx: &mut ModelContext<Self>,
     ) -> Option<proto::View> {
-        let (item, panel_id) = self.active_item_for_followers(cx);
+        let (item, panel_id) = self.active_item_for_followers(window, cx);
         let item = item?;
         let leader_id = self
             .pane_for(&*item)
@@ -3619,9 +3621,10 @@ impl Workspace {
     fn handle_follow(
         &mut self,
         follower_project_id: Option<u64>,
+        window: &mut Window,
         cx: &mut ModelContext<Self>,
     ) -> proto::FollowResponse {
-        let active_view = self.active_view_for_follower(follower_project_id, cx);
+        let active_view = self.active_view_for_follower(follower_project_id, window, cx);
 
         cx.notify();
         proto::FollowResponse {
@@ -3815,7 +3818,7 @@ impl Workspace {
         let mut is_project_item = true;
         let mut update = proto::UpdateActiveView::default();
         if cx.is_window_active() {
-            let (active_item, panel_id) = self.active_item_for_followers(cx);
+            let (active_item, panel_id) = self.active_item_for_followers(window, cx);
 
             if let Some(item) = active_item {
                 if item.focus_handle(cx).contains_focused(window) {
@@ -3873,7 +3876,7 @@ impl Workspace {
         for dock in [&self.left_dock, &self.right_dock, &self.bottom_dock] {
             if dock.focus_handle(cx).contains_focused(window) {
                 if let Some(panel) = dock.read(cx).active_panel() {
-                    if let Some(pane) = panel.pane(cx) {
+                    if let Some(pane) = panel.pane(window, cx) {
                         if let Some(item) = pane.read(cx).active_item() {
                             active_item = Some(item);
                             panel_id = panel.remote_id();

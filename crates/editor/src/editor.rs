@@ -2372,6 +2372,7 @@ impl Editor {
                     Box::new(
                         cx.new_model(|cx| Editor::for_buffer(buffer, Some(project.clone()), cx)),
                     ),
+                    window,
                     cx,
                 )
             })?;
@@ -10205,6 +10206,7 @@ impl Editor {
                                         target.buffer.clone(),
                                         true,
                                         true,
+                                        window,
                                         cx,
                                     )
                                 });

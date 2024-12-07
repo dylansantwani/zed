@@ -2718,8 +2718,8 @@ impl Window {
     pub fn on_focus_in(
         &mut self,
         handle: &FocusHandle,
-        mut listener: impl FnMut(&mut Window, &mut AppContext) + 'static,
         cx: &mut AppContext,
+        mut listener: impl FnMut(&mut Window, &mut AppContext) + 'static,
     ) -> Subscription {
         let focus_id = handle.id;
         let (subscription, activate) =
@@ -2738,8 +2738,8 @@ impl Window {
     pub fn on_focus_out(
         &mut self,
         handle: &FocusHandle,
-        mut listener: impl FnMut(FocusOutEvent, &mut Window, &mut AppContext) + 'static,
         cx: &mut AppContext,
+        mut listener: impl FnMut(FocusOutEvent, &mut Window, &mut AppContext) + 'static,
     ) -> Subscription {
         let focus_id = handle.id;
         let (subscription, activate) =

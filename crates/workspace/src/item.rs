@@ -164,8 +164,13 @@ pub trait Item: FocusableView + EventEmitter<Self::Event> + Render {
     ///
     /// By default this returns a [`Label`] that displays that text from
     /// `tab_content_text`.
-    fn tab_content(&self, params: TabContentParams, cx: &AppContext) -> AnyElement {
-        let Some(text) = self.tab_content_text(cx) else {
+    fn tab_content(
+        &self,
+        params: TabContentParams,
+        window: &Window,
+        cx: &AppContext,
+    ) -> AnyElement {
+        let Some(text) = self.tab_content_text(window, cx) else {
             return gpui::Empty.into_any();
         };
 
@@ -378,8 +383,13 @@ pub trait ItemHandle: 'static + Send {
     fn focus_handle(&self, cx: &AppContext) -> FocusHandle;
     fn tab_tooltip_text(&self, cx: &AppContext) -> Option<SharedString>;
     fn tab_description(&self, detail: usize, cx: &AppContext) -> Option<SharedString>;
-    fn tab_content(&self, params: TabContentParams, cx: &AppContext) -> AnyElement;
-    fn tab_icon(&self, cx: &AppContext) -> Option<Icon>;
+    fn tab_content(
+        &self,
+        params: TabContentParams,
+        window: &mut Window,
+        cx: &AppContext,
+    ) -> AnyElement;
+    fn tab_icon(&self, window: &mut Window, cx: &AppContext) -> Option<Icon>;
     fn telemetry_event_text(&self, cx: &AppContext) -> Option<&'static str>;
     fn dragged_tab_content(&self, params: TabContentParams, cx: &AppContext) -> AnyElement;
     fn project_path(&self, cx: &AppContext) -> Option<ProjectPath>;
@@ -502,12 +512,17 @@ impl<T: Item> ItemHandle for Model<T> {
         self.read(cx).tab_description(detail, cx)
     }
 
-    fn tab_content(&self, params: TabContentParams, cx: &AppContext) -> AnyElement {
-        self.read(cx).tab_content(params, cx)
+    fn tab_content(
+        &self,
+        params: TabContentParams,
+        window: &mut Window,
+        cx: &AppContext,
+    ) -> AnyElement {
+        self.read(cx).tab_content(params, window, cx)
     }
 
-    fn tab_icon(&self, cx: &AppContext) -> Option<Icon> {
-        self.read(cx).tab_icon(cx)
+    fn tab_icon(&self, window: &mut Window, cx: &AppContext) -> Option<Icon> {
+        self.read(cx).tab_icon(window, cx)
     }
 
     fn dragged_tab_content(&self, params: TabContentParams, cx: &AppContext) -> AnyElement {
